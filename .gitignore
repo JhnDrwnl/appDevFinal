@@ -28,4 +28,4 @@ serviceAccountKey.json
 src/services/firebase.js
 
 
-src/.env
+.env
