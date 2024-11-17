@@ -23,4 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 
-serviceAccountKey
+serviceAccountKey.json
+
+firebase.js
+
+.env

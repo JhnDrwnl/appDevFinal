@@ -1,0 +1,41 @@
+<template>
+  <div class="min-h-screen flex flex-col bg-gray-50">
+    <!-- Header -->
+    <Header />
+    
+    <!-- Main Content with gradient background -->
+    <main class="flex-grow relative">
+      <!-- Background gradient -->
+      <div class="absolute inset-0 bg-gradient-to-b from-white to-gray-50"></div>
+      
+      <!-- Content -->
+      <div class="relative">
+        <router-view v-slot="{ Component }">
+              <transition name="fade" mode="out-in">
+                <component :is="Component" />
+              </transition>
+            </router-view>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <Footer />
+  </div>
+</template>
+
+<script setup>
+import Header from '@/components/landing/Header.vue'
+import Footer from '@/components/landing/Footer.vue'
+</script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

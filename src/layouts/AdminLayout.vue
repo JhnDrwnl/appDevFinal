@@ -1,35 +1,126 @@
 <template>
-    <div class="flex flex-col min-h-screen bg-gray-100">
-      <Header @toggle-sidebar="toggleSidebar" />
-      <div class="flex flex-1 overflow-hidden">
-        <AdminSidebar :is-open="sidebarOpen" />
-        <main class="flex-1 overflow-x-hidden overflow-y-auto">
-          <div class="container mx-auto px-4 py-8">
-            <router-view></router-view>
+  <div class="min-h-screen bg-gray-100 relative">
+    <!-- Sidebar with dynamic z-index -->
+    <AdminSidebar 
+      :isOpen="isSidebarOpen" 
+      @update:isOpen="toggleSidebar"
+      :class="[
+        'transition-all duration-300 ease-in-out fixed inset-y-0 left-0',
+        isSidebarActive ? 'z-[80]' : 'z-[60]'
+      ]"
+    />
+  
+    <!-- Main Content -->
+    <div 
+      class="flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out"
+    >
+      <!-- Header with dynamic z-index -->
+      <Header 
+        @toggle-sidebar="toggleSidebar" 
+        :isSidebarOpen="isSidebarOpen"
+        :class="[
+          'sticky top-0 transition-all duration-300 ease-in-out',
+          isSidebarActive ? 'z-[60]' : 'z-[70]'
+        ]"
+      />
+      
+      <PageHeader :key="$route.path" :title="currentPageTitle" />
+      
+      <main class="flex-1 px-6 py-4 lg:px-8 overflow-x-hidden">
+        <div class="max-w-7xl mx-auto w-full">
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 lg:p-8">
+            <router-view v-slot="{ Component }">
+              <transition name="fade" mode="out-in">
+                <component :is="Component" />
+              </transition>
+            </router-view>
           </div>
-        </main>
-      </div>
-      <Footer />
+        </div>
+      </main>
     </div>
+  
+    <!-- Overlay for mobile -->
+    <div 
+      v-if="isSidebarOpen" 
+      class="fixed inset-0 bg-gray-600 bg-opacity-50 transition-opacity md:hidden z-50"
+      @click="closeSidebarOnMobile"
+    ></div>
+  </div>
   </template>
   
   <script setup>
-  import { ref } from 'vue'
+  import { ref, computed, onMounted, onUnmounted } from 'vue'
+  import { useRoute } from 'vue-router'
   import Header from '@/components/admin/Header.vue'
-  import Footer from '@/components/admin/Footer.vue'
   import AdminSidebar from '@/components/admin/Sidebar.vue'
+  import PageHeader from '@/components/common/PageHeader.vue'
   
-  const sidebarOpen = ref(true)
+  const route = useRoute()
+  const isSidebarOpen = ref(false)
+  const isSidebarActive = ref(false)
+  
+  // Handle click outside for mobile
+  const handleClickOutside = (event) => {
+    if (window.innerWidth < 768 && isSidebarOpen.value) {
+      // Check if click is outside sidebar
+      const sidebar = document.querySelector('[data-sidebar]')
+      const header = document.querySelector('[data-header]')
+      if (sidebar && !sidebar.contains(event.target) && 
+          header && !header.contains(event.target)) {
+        isSidebarOpen.value = false
+        isSidebarActive.value = false
+      }
+    }
+  }
+  
+  // Handle sidebar interaction
+  const handleSidebarInteraction = (event) => {
+    const sidebar = document.querySelector('[data-sidebar]')
+    if (sidebar && sidebar.contains(event.target)) {
+      isSidebarActive.value = true
+    } else {
+      isSidebarActive.value = false
+    }
+  }
+  
+  onMounted(() => {
+    document.addEventListener('click', handleClickOutside)
+    document.addEventListener('mousedown', handleSidebarInteraction)
+  })
+  
+  onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside)
+    document.removeEventListener('mousedown', handleSidebarInteraction)
+  })
+  
+  const currentPageTitle = computed(() => {
+    const path = route.path.split('/').filter(Boolean)
+    const lastSegment = path[path.length - 1]
+    return lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1).replace(/-/g, ' ')
+  })
   
   const toggleSidebar = () => {
-    sidebarOpen.value = !sidebarOpen.value
+    isSidebarOpen.value = !isSidebarOpen.value
+    // When toggling via button, make sidebar active
+    isSidebarActive.value = isSidebarOpen.value
+  }
+  
+  const closeSidebarOnMobile = () => {
+    if (window.innerWidth < 768) {
+      isSidebarOpen.value = false
+      isSidebarActive.value = false
+    }
   }
   </script>
   
-  <style scoped>
-  @media (max-width: 768px) {
-    .flex-1 {
-      flex-direction: column;
-    }
+  <style>
+  .fade-enter-active,
+  .fade-leave-active {
+    transition: opacity 0.2s ease;
+  }
+  
+  .fade-enter-active,
+  .fade-leave-to {
+    opacity: 0;
   }
   </style>

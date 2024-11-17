@@ -1,12 +1,34 @@
 import { createApp } from 'vue';
+import { createPinia } from 'pinia';
 import App from './App.vue';
 import router from './router';
-import pinia from './store';
-import './assets/styles/tailwind.css';
+import './assets/styles/tailwind.css'
 
+// Create the app
 const app = createApp(App);
 
-app.use(router);
-app.use(pinia);
+// Use Pinia for state management
+app.use(createPinia());
 
+// Use router for routing
+app.use(router);
+
+// Mount the app
 app.mount('#app');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

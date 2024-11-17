@@ -1,10 +1,8 @@
+// src/router/user.routes.js
 import UserLayout from '@/layouts/UserLayout.vue'
-import Home from '@/views/user/Home.vue'
-import ProductCatalog from '@/views/user/ProductCatalog.vue'
-import ProductDetails from '@/views/user/ProductDetails.vue'
-import Cart from '@/views/user/Cart.vue'
-import Checkout from '@/views/user/Checkout.vue'
-import Profile from '@/views/user/Profile.vue'
+import UserHome from '@/views/user/Home.vue'
+// import UserProfile from '@/views/user/Profile.vue'
+// import UserSettings from '@/views/user/Settings.vue'
 
 export default [
   {
@@ -15,33 +13,19 @@ export default [
       {
         path: '',
         name: 'UserHome',
-        component: Home
+        component: UserHome,
       },
-      {
-        path: 'catalog',
-        name: 'ProductCatalog',
-        component: ProductCatalog
-      },
-      {
-        path: 'product/:id',
-        name: 'ProductDetails',
-        component: ProductDetails
-      },
-      {
-        path: 'cart',
-        name: 'Cart',
-        component: Cart
-      },
-      {
-        path: 'checkout',
-        name: 'Checkout',
-        component: Checkout
-      },
-      {
-        path: 'profile',
-        name: 'Profile',
-        component: Profile
-      }
-    ]
-  }
+      // {
+      //   path: 'profile',
+      //   name: 'UserProfile',
+      //   component: UserProfile,
+      // },
+      // {
+      //   path: 'settings',
+      //   name: 'UserSettings',
+      //   component: UserSettings,
+      // },
+      // Add more user routes as needed
+    ],
+  },
 ]
