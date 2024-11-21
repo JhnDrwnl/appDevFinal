@@ -1,3 +1,4 @@
+<!-- components/common/Alert.vue -->
 <template>
     <div
       v-if="show"

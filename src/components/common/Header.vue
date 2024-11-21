@@ -29,7 +29,7 @@
                 <img 
                   :src="profilePicture" 
                   alt="User profile" 
-                  class="w-10 h-10 rounded-xl object-cover border border-gray-200"
+                  class="w-10 h-10 rounded-xl object-cover"
                 />
               </button>
               <div 
@@ -57,7 +57,7 @@ import { ShoppingBag, Bell } from 'lucide-vue-next'
 const authStore = useAuthStore()
 const router = useRouter()
 
-const profilePicture = ref('/placeholder.svg?height=40&width=40')
+const profilePicture = ref('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\' viewBox=\'0 0 36 36\'%3E%3Crect width=\'36\' height=\'36\' fill=\'%23f0f2f5\'/%3E%3Cpath d=\'M18 20.5a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11ZM8 28.5c0-2.5 5-5 10-5s10 2.5 10 5\' stroke=\'%23bec3c9\' stroke-width=\'2\' fill=\'none\'/%3E%3C/svg%3E')
 const isDropdownOpen = ref(false)
 const profileDropdown = ref(null)
 const unreadNotificationsCount = ref(0)

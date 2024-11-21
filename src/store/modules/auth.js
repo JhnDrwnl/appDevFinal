@@ -1,24 +1,30 @@
+// store/modules/auth.js
 import { defineStore } from 'pinia'
 import { 
-  auth, 
+  auth,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
   sendPasswordResetEmail,
-  updateProfile,
-  updateEmail,
   updatePassword,
+  updateEmail,
   setPersistence,
   browserSessionPersistence,
   browserLocalPersistence,
   sendEmailVerification,
   applyActionCode,
   isSignInWithEmailLink,
-  signInWithEmailLink
+  signInWithEmailLink,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+  verifyBeforeUpdateEmail,
+  updateProfile
 } from '@/services/firebase'
-import { doc, getDoc, setDoc } from 'firebase/firestore'
-import { db } from '@/services/firebase'
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
+import { db, storage } from '@/services/firebase'
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -27,7 +33,6 @@ export const useAuthStore = defineStore('auth', {
     error: null,
     isLoading: false,
     isInitialized: false,
-    userExists: false,
     rememberMe: false
   }),
 
@@ -35,6 +40,7 @@ export const useAuthStore = defineStore('auth', {
     isAuthenticated: (state) => !!state.user,
     isAdmin: (state) => state.userRole === 'admin',
     isEmailVerified: (state) => state.user?.emailVerified ?? false,
+    userExists: (state) => !!state.user && !!state.userRole,
   },
 
   actions: {
@@ -52,7 +58,6 @@ export const useAuthStore = defineStore('auth', {
           } else {
             this.user = null
             this.userRole = null
-            this.userExists = false
           }
           this.isLoading = false
           this.isInitialized = true
@@ -98,14 +103,11 @@ export const useAuthStore = defineStore('auth', {
         const user = userCredential.user
         
         const temporaryUsername = `user${user.uid.substring(0, 8)}`
-        await updateProfile(user, { displayName: temporaryUsername })
         
         await this.setUserRole(user.uid, 'user', temporaryUsername)
         
-        // Send email verification
         await sendEmailVerification(user)
         
-        // Logout the user immediately after registration
         await this.logout()
         
         return { success: true, message: 'Registration successful. Please check your email to verify your account before logging in.' }
@@ -124,7 +126,6 @@ export const useAuthStore = defineStore('auth', {
         this.user = null
         this.userRole = null
         this.error = null
-        this.userExists = false
         this.rememberMe = false
         localStorage.removeItem('rememberMe')
       } catch (error) {
@@ -138,10 +139,8 @@ export const useAuthStore = defineStore('auth', {
         const userDoc = await getDoc(doc(db, 'users', uid))
         if (userDoc.exists()) {
           this.userRole = userDoc.data().role || 'user'
-          this.userExists = true
         } else {
           this.userRole = 'user'
-          this.userExists = false
           await this.setUserRole(uid, 'user')
         }
         this.user = { ...this.user, role: this.userRole }
@@ -149,7 +148,6 @@ export const useAuthStore = defineStore('auth', {
         console.error('Error fetching user role:', error)
         this.userRole = 'user'
         this.user = { ...this.user, role: 'user' }
-        this.userExists = false
       }
     },
 
@@ -161,7 +159,6 @@ export const useAuthStore = defineStore('auth', {
         }, { merge: true })
         this.userRole = role
         this.user = { ...this.user, role: role, username: username }
-        this.userExists = true
       } catch (error) {
         console.error('Error setting user role:', error)
         throw error
@@ -183,38 +180,6 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    async updateUserProfile(displayName) {
-      try {
-        this.isLoading = true
-        this.error = null
-        await updateProfile(auth.currentUser, { displayName })
-        this.user = { ...this.user, displayName }
-        return { success: true, message: 'Profile updated successfully.' }
-      } catch (error) {
-        console.error('Update profile error:', error)
-        this.error = this.getErrorMessage(error.code)
-        return { success: false, error: this.error }
-      } finally {
-        this.isLoading = false
-      }
-    },
-
-    async updateUserEmail(newEmail) {
-      try {
-        this.isLoading = true
-        this.error = null
-        await updateEmail(auth.currentUser, newEmail)
-        this.user = { ...this.user, email: newEmail }
-        return { success: true, message: 'Email updated successfully.' }
-      } catch (error) {
-        console.error('Update email error:', error)
-        this.error = this.getErrorMessage(error.code)
-        return { success: false, error: this.error }
-      } finally {
-        this.isLoading = false
-      }
-    },
-
     async updateUserPassword(newPassword) {
       try {
         this.isLoading = true
@@ -223,6 +188,31 @@ export const useAuthStore = defineStore('auth', {
         return { success: true, message: 'Password updated successfully.' }
       } catch (error) {
         console.error('Update password error:', error)
+        this.error = this.getErrorMessage(error.code)
+        return { success: false, error: this.error }
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    async updateUserEmail(newEmail, currentPassword) {
+      try {
+        this.isLoading = true
+        this.error = null
+
+        const credential = EmailAuthProvider.credential(
+          auth.currentUser.email,
+          currentPassword
+        )
+        await reauthenticateWithCredential(auth.currentUser, credential)
+
+        await updateEmail(auth.currentUser, newEmail)
+
+        this.user = { ...this.user, email: newEmail }
+
+        return { success: true, message: 'Email updated successfully.' }
+      } catch (error) {
+        console.error('Update email error:', error)
         this.error = this.getErrorMessage(error.code)
         return { success: false, error: this.error }
       } finally {
@@ -251,44 +241,6 @@ export const useAuthStore = defineStore('auth', {
       } finally {
         this.isLoading = false
       }
-    },
-
-    async loginWithVerifiedEmail(email) {
-      try {
-        this.isLoading = true
-        this.error = null
-        
-        const userRecord = await this.getUserByEmail(email)
-        if (userRecord && userRecord.emailVerified) {
-          await this.silentLogin(email)
-          return { success: true, message: 'Logged in successfully.' }
-        } else {
-          return { success: false, error: 'User not found or email not verified.' }
-        }
-      } catch (error) {
-        console.error('Login with verified email error:', error)
-        this.error = this.getErrorMessage(error.code)
-        return { success: false, error: this.error }
-      } finally {
-        this.isLoading = false
-      }
-    },
-
-    async getUserByEmail(email) {
-      // This is a placeholder function. In a real-world scenario, you would
-      // need to implement this on your backend, as Firebase doesn't provide
-      // a direct way to get a user by email from the client-side.
-      // For now, we'll assume the user exists and is verified.
-      return { email, emailVerified: true }
-    },
-
-    async silentLogin(email) {
-      // This is a placeholder function. In a real-world scenario, you would
-      // need to implement this on your backend to generate a custom token
-      // or use another method to silently log in the user.
-      // For now, we'll simulate a successful login.
-      this.user = { email, emailVerified: true }
-      await this.fetchUserRole(this.user.uid)
     },
 
     async handleEmailLink(email) {
@@ -332,6 +284,127 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    async changeEmailWithVerification(newEmail, currentPassword) {
+      try {
+        this.isLoading = true;
+        this.error = null;
+
+        // Re-authenticate the user
+        const credential = EmailAuthProvider.credential(
+          auth.currentUser.email,
+          currentPassword
+        );
+        await reauthenticateWithCredential(auth.currentUser, credential);
+
+        // Use verifyBeforeUpdateEmail instead of updateEmail
+        await verifyBeforeUpdateEmail(auth.currentUser, newEmail);
+
+        return { 
+          success: true, 
+          message: 'A verification email has been sent to your new address. Please check your inbox and verify your new email to complete the change.' 
+        };
+      } catch (error) {
+        console.error('Change email error:', error);
+        this.error = this.getErrorMessage(error.code);
+        return { success: false, error: this.error };
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async changePassword(currentPassword, newPassword) {
+      try {
+        this.isLoading = true;
+        this.error = null;
+
+        // Check if the new password is the same as the current password
+        if (currentPassword === newPassword) {
+          return { 
+            success: false, 
+            error: 'New password must be different from the current password.' 
+          };
+        }
+
+        // Re-authenticate the user
+        const credential = EmailAuthProvider.credential(
+          auth.currentUser.email,
+          currentPassword
+        );
+        
+        try {
+          await reauthenticateWithCredential(auth.currentUser, credential);
+        } catch (reauthError) {
+          console.error('Reauthentication error:', reauthError);
+          return { 
+            success: false, 
+            error: 'Current password is incorrect. Please try again.' 
+          };
+        }
+
+        // Update the password
+        await updatePassword(auth.currentUser, newPassword);
+
+        return { 
+          success: true, 
+          message: 'Password has been successfully updated.' 
+        };
+      } catch (error) {
+        console.error('Change password error:', error);
+        this.error = this.getErrorMessage(error.code);
+        return { success: false, error: this.error };
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async updateProfilePicture(file) {
+      this.isLoading = true
+      try {
+        console.log('Starting profile picture update process')
+
+        // 1. Upload to Firebase Storage
+        const fileRef = ref(storage, `profile_pictures/${this.user.uid}`)
+        console.log('Uploading file to Firebase Storage')
+        await uploadBytes(fileRef, file)
+        console.log('File uploaded successfully')
+
+        // 2. Get download URL
+        console.log('Getting download URL')
+        const photoURL = await getDownloadURL(fileRef)
+        console.log('Download URL obtained:', photoURL)
+
+        // 3. Update Auth profile
+        console.log('Updating Auth profile')
+        await updateProfile(auth.currentUser, { photoURL })
+        console.log('Auth profile updated successfully')
+
+        // 4. Update Firestore
+        console.log('Updating Firestore document')
+        const userDocRef = doc(db, 'users', this.user.uid)
+        await setDoc(userDocRef, { photoURL }, { merge: true })
+        console.log('Firestore document updated successfully')
+
+        // 5. Update local user state
+        this.user = { ...this.user, photoURL }
+        console.log('Local user state updated')
+
+        this.isLoading = false
+        console.log('Profile picture update process completed successfully')
+        return {
+          success: true,
+          message: 'Profile picture updated successfully',
+          photoURL
+        }
+      } catch (error) {
+        console.error('Error in updateProfilePicture:', error)
+        this.isLoading = false
+        return {
+          success: false,
+          error: error.message
+        }
+      }
+    },
+    
     getErrorMessage(code) {
       const errorMessages = {
         'auth/invalid-credential': 'Invalid email or password',

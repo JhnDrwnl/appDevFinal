@@ -38,7 +38,7 @@
   import { ref} from 'vue'
   import { useRoute } from 'vue-router'
   import Header from '@/components/common/Header.vue'
-  import Footer from '@/components/landing/Header.vue'
+  import Footer from '@/components/landing/Footer.vue'
 
   
   const route = useRoute()
