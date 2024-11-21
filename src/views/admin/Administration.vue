@@ -12,37 +12,7 @@
       {{ alertMessage }}
     </Alert>
 
-    <!-- Tab Navigation -->
-    <div class="mb-8 border-b border-gray-200">
-      <nav class="flex space-x-8" aria-label="Settings navigation">
-        <button
-          @click="activeTab = 'profile'"
-          :class="[
-            'pb-4 px-1 font-medium text-sm flex items-center space-x-2',
-            activeTab === 'profile'
-              ? 'border-b-2 border-[#0095FF] text-[#0095FF]'
-              : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
-          ]"
-        >
-          <UserIcon class="h-5 w-5" />
-          <span>Profile Settings</span>
-        </button>
-        <button
-          @click="activeTab = 'history'"
-          :class="[
-            'pb-4 px-1 font-medium text-sm flex items-center space-x-2',
-            activeTab === 'history'
-              ? 'border-b-2 border-[#0095FF] text-[#0095FF]'
-              : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
-          ]"
-        >
-          <ClockIcon class="h-5 w-5" />
-          <span>Update History</span>
-        </button>
-      </nav>
-    </div>
-
-    <div v-if="activeTab === 'profile'" class="space-y-8">
+    <div class="space-y-8">
       <!-- Profile Picture Section -->
       <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 class="text-xl font-semibold text-gray-900 mb-4">Profile Picture</h2>
@@ -237,31 +207,6 @@
         </transition>
       </div>
     </div>
-
-    <div v-if="activeTab === 'history'" class="space-y-8">
-      <!-- Change History Section -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">Update History</h2>
-        <div v-if="changeHistory.length > 0" class="space-y-4">
-          <div v-for="(change, index) in changeHistory" :key="index" class="border-b border-gray-200 pb-4 last:border-b-0 last:pb-0">
-            <p class="text-sm text-gray-600">
-              <span class="font-medium">{{ formatChangeType(change.type) }}</span> - 
-              {{ formatDate(change.timestamp) }}
-            </p>
-            <p v-if="change.type === 'email'" class="text-xs text-gray-500 mt-1">
-              Changed from {{ change.details.oldEmail }} to {{ change.details.newEmail }}
-            </p>
-            <p v-if="change.type === 'password'" class="text-xs text-gray-500 mt-1">
-              Password changed
-            </p>
-            <p v-if="change.type === 'profilePicture'" class="text-xs text-gray-500 mt-1">
-              Profile picture updated
-            </p>
-          </div>
-        </div>
-        <p v-else class="text-sm text-gray-500">No update history available.</p>
-      </div>
-    </div>
   </div>
   <div v-else class="max-w-4xl mx-auto px-4 py-8 text-center">
     <p>Loading user data...</p>
@@ -269,25 +214,19 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { 
   EyeIcon, 
   EyeSlashIcon,
-  UserIcon,
-  ClockIcon,
   PencilSquareIcon,
   XMarkIcon
 } from '@heroicons/vue/24/outline'
 import { useAuthStore } from '@/store/modules/auth'
-import { collection, query, orderBy, getDocs } from 'firebase/firestore'
-import { db } from '@/services/firebase'
 import Alert from '@/components/common/Alert.vue'
 
 const authStore = useAuthStore()
 
-const activeTab = ref('profile')
 const user = computed(() => authStore.user)
-const changeHistory = ref([])
 
 // Alert state
 const alertMessage = ref('')
@@ -335,7 +274,6 @@ const handleProfilePictureUpdate = async () => {
         fileSelected.value = false
         selectedFile.value = null
         displayedImageUrl.value = `${result.photoURL}?t=${Date.now()}`
-        fetchChangeHistory()
       } else {
         throw new Error(result.error || 'Failed to update profile picture')
       }
@@ -378,7 +316,6 @@ const changeEmail = async () => {
       newEmail.value = ''
       currentPasswordEmail.value = ''
       isEditingEmail.value = false
-      fetchChangeHistory()
     }
   } catch (error) {
     setAlert(error.message || 'An error occurred while changing the email.', 'error')
@@ -429,7 +366,6 @@ const changePassword = async () => {
       newPassword.value = ''
       confirmNewPassword.value = ''
       isEditingPassword.value = false
-      fetchChangeHistory()
     } else {
       // Handle the case when the current password is incorrect
       if (result.error === 'wrong-password') {
@@ -446,54 +382,11 @@ const changePassword = async () => {
     isChangingPassword.value = false
   }
 }
-
-
-// Change History
-const fetchChangeHistory = async () => {
-  if (!user.value) return
-
-  const historyCollection = collection(db, 'users', user.value.uid, 'changeHistory')
-  const q = query(historyCollection, orderBy('timestamp', 'desc'))
-  
-  try {
-    const querySnapshot = await getDocs(q)
-    changeHistory.value = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }))
-  } catch (error) {
-    console.error('Error fetching change history:', error)
-    setAlert('Failed to fetch change history.', 'error')
-  }
-}
-
-const formatChangeType = (type) => {
-  const types = {
-    email: 'Email Change',
-    password: 'Password Change',
-    profilePicture: 'Profile Picture Update'
-  }
-  return types[type] || 'Unknown Change'
-}
-
-const formatDate = (timestamp) => {
-  if (!timestamp) return 'Unknown Date'
-  const date = timestamp.toDate()
-  return date.toLocaleString()
-}
-
-onMounted(() => {
-  fetchChangeHistory()
-})
 </script>
 
 <style scoped>
 input[type="password"]::-ms-reveal,
 input[type="password"]::-ms-clear {
   display: none;
-}
-
-.bg-coral-400 {
-  background-color: #ff7f7f;
 }
 </style>
