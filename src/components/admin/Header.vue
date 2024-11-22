@@ -1,3 +1,4 @@
+<!-- components/admin/Header.vue -->
 <template>
   <header data-header class="px-6 lg:px-8 py-4">
     <div class="max-w-7xl mx-auto w-full">
@@ -73,9 +74,9 @@
                   <p class="text-xs font-medium text-gray-500 mt-1">{{ user?.role || 'No Role' }}</p>
                 </div>
                 <router-link
-                  :to="{ name: 'AdminAdministration' }"
+                  :to="{ name: 'AdminProfile' }"
                   class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
-                  @click="closeUserMenu"
+                  @click="handleMyPreferences"
                 >
                   <Settings class="w-4 h-4 mr-2" />
                   My Preferences
@@ -99,7 +100,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, inject } from 'vue'
 import { useAuthStore } from '@/store/modules/auth'
 import { useRouter } from 'vue-router'
 import { Search, Settings } from 'lucide-vue-next'
@@ -126,6 +127,13 @@ const handleLogout = async () => {
   } catch (error) {
     console.error('Logout failed:', error)
   }
+}
+
+const openAdminDropdown = inject('openAdminDropdown')
+
+const handleMyPreferences = () => {
+  closeUserMenu()
+  openAdminDropdown()
 }
 
 defineProps({

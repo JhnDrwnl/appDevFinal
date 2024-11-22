@@ -1,16 +1,26 @@
 // src/router/index.js
+// src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/store/modules/auth'
 import adminRoutes from './admin.routes.js'
 import userRoutes from './user.routes.js'
 import landingRoutes from './landing.routes.js'
 import authRoutes from './auth.routes.js'
+import cashierRoutes from './cashier.routes.js'
+import driverRoutes from './driver.routes.js'
+import managerRoutes from './manager.routes.js'
+import stockManagerRoutes from './stockManager.routes.js'
 
 const routes = [
   ...landingRoutes,
   ...authRoutes,
   ...adminRoutes,
   ...userRoutes,
+  ...cashierRoutes,
+  ...driverRoutes,
+  ...managerRoutes,
+  ...stockManagerRoutes,
+
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
@@ -37,24 +47,58 @@ router.beforeEach(async (to, from, next) => {
     try {
       await authStore.initializeAuth()
     } catch (error) {
+      console.error('Auth initialization failed:', error)
       next({ name: 'login' })
       return
     }
   }
 
   const isAuthenticated = authStore.isAuthenticated
-  const isAdmin = authStore.isAdmin
+  const userRole = authStore.userRole
   const userExists = authStore.userExists
 
+  console.log('Current user role:', userRole)
+  console.log('Route meta:', to.meta)
+  console.log('Is authenticated:', isAuthenticated)
+  console.log('User exists:', userExists)
+  console.log('Requested route:', to.path)
+
   if (to.meta.requiresAuth && !isAuthenticated) {
+    console.log('Redirecting to login due to authentication requirement')
     next({ name: 'login' })
-  } else if (to.meta.requiresAdmin && !isAdmin) {
-    next({ name: 'UserHome' })
-  } else if ((to.name === 'login' || to.name === 'register') && isAuthenticated && userExists) {
-    next(isAdmin ? { name: 'AdminDashboard' } : { name: 'UserHome' })
+  } else if (isAuthenticated && userExists) {
+    if (to.meta.roles && !to.meta.roles.includes(userRole)) {
+      console.log('User does not have required role, redirecting to appropriate dashboard')
+      const roleBasedRedirect = getRoleBasedRedirect(userRole)
+      next(roleBasedRedirect)
+    } else {
+      console.log('Proceeding to requested route:', to.path)
+      next()
+    }
   } else {
+    console.log('Proceeding to requested route:', to.path)
     next()
   }
 })
+
+function getRoleBasedRedirect(role) {
+  console.log('Getting redirect for role:', role)
+  switch (role) {
+    case 'admin':
+      return { name: 'AdminDashboard' }
+    case 'cashier':
+      return { name: 'CashierDashboard' }
+    case 'driver':
+      return { name: 'DriverDashboard' }
+    case 'manager':
+      return { name: 'ManagerDashboard' }
+    case 'stock manager':
+      return { name: 'StockManagerDashboard' }
+    case 'user':
+      return { name: 'UserHome' }
+    default:
+      return { name: 'UserHome' }
+  }
+}
 
 export default router

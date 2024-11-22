@@ -1,3 +1,4 @@
+<!-- layouts/AdminLayout.vue -->
 <template>
   <div class="min-h-screen bg-gray-100 relative">
     <!-- Sidebar with dynamic z-index -->
@@ -27,15 +28,11 @@
       <PageHeader :key="$route.path" :title="currentPageTitle" />
       
       <main class="flex-1 px-6 py-4 lg:px-8 overflow-x-hidden">
-        <div class="max-w-7xl mx-auto w-full">
-          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 lg:p-8">
-            <router-view v-slot="{ Component }">
-              <transition name="fade" mode="out-in">
-                <component :is="Component" />
-              </transition>
-            </router-view>
-          </div>
-        </div>
+        <router-view v-slot="{ Component }">
+          <transition name="fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
       </main>
     </div>
   
@@ -46,81 +43,90 @@
       @click="closeSidebarOnMobile"
     ></div>
   </div>
-  </template>
-  
-  <script setup>
-  import { ref, computed, onMounted, onUnmounted } from 'vue'
-  import { useRoute } from 'vue-router'
-  import Header from '@/components/admin/Header.vue'
-  import AdminSidebar from '@/components/admin/Sidebar.vue'
-  import PageHeader from '@/components/common/PageHeader.vue'
-  
-  const route = useRoute()
-  const isSidebarOpen = ref(false)
-  const isSidebarActive = ref(false)
-  
-  // Handle click outside for mobile
-  const handleClickOutside = (event) => {
-    if (window.innerWidth < 768 && isSidebarOpen.value) {
-      // Check if click is outside sidebar
-      const sidebar = document.querySelector('[data-sidebar]')
-      const header = document.querySelector('[data-header]')
-      if (sidebar && !sidebar.contains(event.target) && 
-          header && !header.contains(event.target)) {
-        isSidebarOpen.value = false
-        isSidebarActive.value = false
-      }
-    }
-  }
-  
-  // Handle sidebar interaction
-  const handleSidebarInteraction = (event) => {
+</template>
+
+<script setup>
+import { ref, computed, onMounted, onUnmounted, provide } from 'vue'
+import { useRoute } from 'vue-router'
+import Header from '@/components/admin/Header.vue'
+import AdminSidebar from '@/components/admin/Sidebar.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
+
+const route = useRoute()
+const isSidebarOpen = ref(false)
+const isSidebarActive = ref(false)
+const isAdminDropdownOpen = ref(false)
+
+// Handle click outside for mobile
+const handleClickOutside = (event) => {
+  if (window.innerWidth < 768 && isSidebarOpen.value) {
+    // Check if click is outside sidebar
     const sidebar = document.querySelector('[data-sidebar]')
-    if (sidebar && sidebar.contains(event.target)) {
-      isSidebarActive.value = true
-    } else {
-      isSidebarActive.value = false
-    }
-  }
-  
-  onMounted(() => {
-    document.addEventListener('click', handleClickOutside)
-    document.addEventListener('mousedown', handleSidebarInteraction)
-  })
-  
-  onUnmounted(() => {
-    document.removeEventListener('click', handleClickOutside)
-    document.removeEventListener('mousedown', handleSidebarInteraction)
-  })
-  
-  const currentPageTitle = computed(() => {
-    const path = route.path.split('/').filter(Boolean)
-    const lastSegment = path[path.length - 1]
-    return lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1).replace(/-/g, ' ')
-  })
-  
-  const toggleSidebar = () => {
-    isSidebarOpen.value = !isSidebarOpen.value
-    // When toggling via button, make sidebar active
-    isSidebarActive.value = isSidebarOpen.value
-  }
-  
-  const closeSidebarOnMobile = () => {
-    if (window.innerWidth < 768) {
+    const header = document.querySelector('[data-header]')
+    if (sidebar && !sidebar.contains(event.target) && 
+        header && !header.contains(event.target)) {
       isSidebarOpen.value = false
       isSidebarActive.value = false
     }
   }
-  </script>
-  
-  <style>
-  .fade-enter-active,
-  .fade-leave-active {
-    transition: opacity 0.2s ease;
+}
+
+// Handle sidebar interaction
+const handleSidebarInteraction = (event) => {
+  const sidebar = document.querySelector('[data-sidebar]')
+  if (sidebar && sidebar.contains(event.target)) {
+    isSidebarActive.value = true
+  } else {
+    isSidebarActive.value = false
   }
-  
-  .fade-enter-active,
-  .fade-leave-to {
-    opacity: 0;
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+  document.addEventListener('mousedown', handleSidebarInteraction)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+  document.removeEventListener('mousedown', handleSidebarInteraction)
+})
+
+const currentPageTitle = computed(() => {
+  const path = route.path.split('/').filter(Boolean)
+  const lastSegment = path[path.length - 1]
+  return lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1).replace(/-/g, ' ')
+})
+
+const toggleSidebar = () => {
+  isSidebarOpen.value = !isSidebarOpen.value
+  // When toggling via button, make sidebar active
+  isSidebarActive.value = isSidebarOpen.value
+}
+
+const closeSidebarOnMobile = () => {
+  if (window.innerWidth < 768) {
+    isSidebarOpen.value = false
+    isSidebarActive.value = false
   }
-  </style>
+}
+
+const openAdminDropdown = () => {
+  isAdminDropdownOpen.value = true
+  isSidebarOpen.value = true // Ensure sidebar is open
+}
+
+provide('openAdminDropdown', openAdminDropdown)
+provide('isAdminDropdownOpen', isAdminDropdownOpen)
+</script>
+
+<style>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-active,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

@@ -1,14 +1,14 @@
 <template>
   <div class="min-h-screen bg-gray-100 relative">
     <!-- Sidebar with dynamic z-index -->
-    <AdminSidebar 
+    <!-- <AdminSidebar 
       :isOpen="isSidebarOpen" 
       @update:isOpen="toggleSidebar"
       :class="[
         'transition-all duration-300 ease-in-out fixed inset-y-0 left-0',
         isSidebarActive ? 'z-[80]' : 'z-[60]'
       ]"
-    />
+    /> -->
   
     <!-- Main Content -->
     <div 

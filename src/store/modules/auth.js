@@ -95,22 +95,33 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    async register(email, password) {
+    async register(email, password, username) {
       try {
         this.isLoading = true
         this.error = null
+        
+        // Create user in Firebase Authentication
         const userCredential = await createUserWithEmailAndPassword(auth, email, password)
         const user = userCredential.user
         
-        const temporaryUsername = `user${user.uid.substring(0, 8)}`
+        // Create user document in Firestore without emailVerified field
+        await setDoc(doc(db, 'users', user.uid), {
+          email: user.email,
+          username: username || `user${user.uid.substring(0, 8)}`,
+          role: 'user',
+          createdAt: new Date()
+        })
         
-        await this.setUserRole(user.uid, 'user', temporaryUsername)
-        
+        // Send email verification
         await sendEmailVerification(user)
         
+        // Logout the user after registration
         await this.logout()
         
-        return { success: true, message: 'Registration successful. Please check your email to verify your account before logging in.' }
+        return { 
+          success: true, 
+          message: 'Registration successful. Please check your email to verify your account before logging in.' 
+        }
       } catch (error) {
         console.error('Registration error:', error)
         this.error = this.getErrorMessage(error.code)
@@ -144,6 +155,7 @@ export const useAuthStore = defineStore('auth', {
           await this.setUserRole(uid, 'user')
         }
         this.user = { ...this.user, role: this.userRole }
+        console.log('User role set:', this.userRole) // Add this line
       } catch (error) {
         console.error('Error fetching user role:', error)
         this.userRole = 'user'
@@ -299,9 +311,16 @@ export const useAuthStore = defineStore('auth', {
         // Use verifyBeforeUpdateEmail instead of updateEmail
         await verifyBeforeUpdateEmail(auth.currentUser, newEmail);
 
+        // Update email in Firestore
+        const userDocRef = doc(db, 'users', auth.currentUser.uid);
+        await updateDoc(userDocRef, { email: newEmail });
+
+        // Update local user state
+        this.user = { ...this.user, email: newEmail };
+
         return { 
           success: true, 
-          message: 'A verification email has been sent to your new address. Please check your inbox and verify your new email to complete the change.' 
+          message: 'A verification email has been sent to your new address. Please check your inbox and verify your new email to complete the change. Firestore has been updated with the new email.' 
         };
       } catch (error) {
         console.error('Change email error:', error);

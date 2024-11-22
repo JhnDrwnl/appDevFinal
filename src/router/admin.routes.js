@@ -1,13 +1,14 @@
 // src/router/admin.routes.js
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import Dashboard from '@/views/admin/Dashboard.vue'
-import Administration from '@/views/admin/Administration.vue'
+import Profile from '@/views/admin/Profile.vue'
+import Employees from '@/views/admin/Employees.vue'
 
 export default [
   {
     path: '/admin',
     component: AdminLayout,
-    meta: { requiresAuth: true, requiresAdmin: true },
+    meta: { requiresAuth: true, roles: ['admin'] },
     children: [
       {
         path: '',
@@ -19,9 +20,14 @@ export default [
         component: Dashboard
       },
       {
-        path: 'administration',
-        name: 'AdminAdministration',
-        component: Administration
+        path: 'profile',
+        name: 'AdminProfile',
+        component: Profile
+      },
+      {
+        path: 'employees',
+        name: 'AdminEmployees',
+        component: Employees
       }
     ]
   }

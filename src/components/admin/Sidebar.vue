@@ -1,3 +1,4 @@
+<!-- components/admin/Sidebar.vue -->
 <template>
   <aside 
     ref="sidebarRef"
@@ -47,7 +48,7 @@
             @click="toggleAdminMenu"
             class="w-full flex items-center px-2 py-2 text-sm font-medium rounded-xl transition-colors"
             :class="[
-              isAdminMenuOpen || isActive('/admin/administration')
+              isAdminMenuOpen || isActive('/admin/profile')
                 ? 'bg-[#EBF5FF] text-[#0095FF]'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             ]"
@@ -86,7 +87,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, inject } from 'vue'
 import { useRoute } from 'vue-router'
 import { 
   HomeIcon, 
@@ -97,7 +98,6 @@ import {
   ChevronDownIcon,
   UserGroupIcon,
   IdentificationIcon,
-  ShieldCheckIcon
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -127,9 +127,8 @@ const regularMenuItems = [
 ]
 
 const adminSubItems = [
-  { name: 'Employees', path: '/admin/administration/employees', icon: UserGroupIcon },
-  { name: 'Profiles', path: '/admin/administration/profiles', icon: IdentificationIcon },
-  { name: 'Permissions', path: '/admin/administration/permissions', icon: ShieldCheckIcon },
+  { name: 'Employees', path: '/admin/employees', icon: UserGroupIcon },
+  { name: 'Profile', path: '/admin/profile', icon: IdentificationIcon },
 ]
 
 const isActive = (path) => {
@@ -191,5 +190,13 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('resize', updateIsMobile)
   document.removeEventListener('mousedown', handleClickOutside)
+})
+
+const isAdminDropdownOpen = inject('isAdminDropdownOpen')
+
+watch(isAdminDropdownOpen, (newValue) => {
+  if (newValue) {
+    isAdminMenuOpen.value = true
+  }
 })
 </script>
