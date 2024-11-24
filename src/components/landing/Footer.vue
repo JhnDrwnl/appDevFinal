@@ -1,146 +1,117 @@
 <template>
-    <footer class="bg-white border-t border-gray-200">
-      <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8">
-        <div class="xl:grid xl:grid-cols-3 xl:gap-8">
-          <div class="space-y-8 xl:col-span-1">
-            <div class="flex items-center space-x-2">
-              <svg class="w-8 h-8 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M13.5 2C13.5 2 15.834 2.66 18.666 4.666C21.5 6.666 21.5 9.334 21.5 9.334V14.666C21.5 14.666 21.5 17.334 18.666 19.334C15.834 21.334 13.5 22 13.5 22C13.5 22 11.166 21.334 8.334 19.334C5.5 17.334 5.5 14.666 5.5 14.666V9.334C5.5 9.334 5.5 6.666 8.334 4.666C11.166 2.66 13.5 2 13.5 2Z"/>
-              </svg>
-              <span class="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
-                DarwinAppdev
-              </span>
-            </div>
-            <p class="text-gray-500 text-base">
-              Bringing you the best in online shopping since 2024. Quality products, great prices, and excellent customer service.
-            </p>
-            <div class="flex space-x-6">
-              <a href="#" class="text-gray-400 hover:text-gray-500">
-                <span class="sr-only">Facebook</span>
-                <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fill-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clip-rule="evenodd" />
-                </svg>
-              </a>
-              <a href="#" class="text-gray-400 hover:text-gray-500">
-                <span class="sr-only">Instagram</span>
-                <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fill-rule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z" clip-rule="evenodd" />
-                </svg>
-              </a>
-              <a href="#" class="text-gray-400 hover:text-gray-500">
-                <span class="sr-only">Twitter</span>
-                <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
-                </svg>
-              </a>
-            </div>
-          </div>
-          <div class="mt-12 grid grid-cols-2 gap-8 xl:mt-0 xl:col-span-2">
-            <div class="md:grid md:grid-cols-2 md:gap-8">
-              <div>
-                <h3 class="text-sm font-semibold text-gray-400 tracking-wider uppercase">Shop</h3>
-                <ul role="list" class="mt-4 space-y-4">
-                  <li>
-                    <a href="#" class="text-base text-gray-500 hover:text-gray-900">
-                      New Arrivals
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" class="text-base text-gray-500 hover:text-gray-900">
-                      Best Sellers
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" class="text-base text-gray-500 hover:text-gray-900">
-                      Sale
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" class="text-base text-gray-500 hover:text-gray-900">
-                      All Products
-                    </a>
-                  </li>
-                </ul>
-              </div>
-              <div class="mt-12 md:mt-0">
-                <h3 class="text-sm font-semibold text-gray-400 tracking-wider uppercase">Support</h3>
-                <ul role="list" class="mt-4 space-y-4">
-                  <li>
-                    <a href="#" class="text-base text-gray-500 hover:text-gray-900">
-                      FAQ
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" class="text-base text-gray-500 hover:text-gray-900">
-                      Shipping
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" class="text-base text-gray-500 hover:text-gray-900">
-                      Returns
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" class="text-base text-gray-500 hover:text-gray-900">
-                      Contact Us
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </div>
-            <div class="md:grid md:grid-cols-2 md:gap-8">
-              <div>
-                <h3 class="text-sm font-semibold text-gray-400 tracking-wider uppercase">Company</h3>
-                <ul role="list" class="mt-4 space-y-4">
-                  <li>
-                    <a href="#" class="text-base text-gray-500 hover:text-gray-900">
-                      About Us
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" class="text-base text-gray-500 hover:text-gray-900">
-                      Careers
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" class="text-base text-gray-500 hover:text-gray-900">
-                      Privacy Policy
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" class="text-base text-gray-500 hover:text-gray-900">
-                      Terms of Service
-                    </a>
-                  </li>
-                </ul>
-              </div>
-              <div class="mt-12 md:mt-0">
-                <h3 class="text-sm font-semibold text-gray-400 tracking-wider uppercase">Subscribe</h3>
-                <p class="mt-4 text-base text-gray-500">
-                  Get the latest news and offers by subscribing to our newsletter.
-                </p>
-                <form class="mt-4 sm:flex sm:max-w-md">
-                  <label for="email-address" class="sr-only">Email address</label>
-                  <input type="email" name="email-address" id="email-address" autocomplete="email" required class="appearance-none min-w-0 w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-4 text-base text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:placeholder-gray-400" placeholder="Enter your email">
-                  <div class="mt-3 rounded-md sm:mt-0 sm:ml-3 sm:flex-shrink-0">
-                    <button type="submit" class="w-full bg-blue-600 flex items-center justify-center border border-transparent rounded-md py-2 px-4 text-base font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                      Subscribe
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="mt-12 border-t border-gray-200 pt-8">
-          <p class="text-base text-gray-400 xl:text-center">
-            &copy; 2024 DarwinAppdev, Inc. All rights reserved.
-          </p>
+  <footer class="bg-[#FFF8F3]">
+    <!-- Newsletter Section -->
+    <div class="container mx-auto px-4 py-16">
+      <div class="text-center mb-8">
+        <h2 class="text-3xl font-bold mb-4">Get 20% off on your first order</h2>
+        <p class="text-gray-600">Join our email list for exclusive offers and the latest news.</p>
+      </div>
+      
+      <div class="max-w-md mx-auto mb-16">
+        <div class="flex gap-2">
+          <input 
+            type="email" 
+            placeholder="Your E-Mail" 
+            class="flex-1 px-4 py-2 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#FF9934]"
+          />
+          <button class="bg-[#FF9934] text-white p-2 rounded-full hover:bg-[#FF8000] transition-colors">
+            <ArrowRightIcon class="w-6 h-6" />
+          </button>
         </div>
       </div>
-    </footer>
-  </template>
-  
-  <script setup>
-  // No additional script needed for this component
-  </script>
+
+      <!-- Main Footer Content -->
+      <div class="grid md:grid-cols-4 gap-8">
+        <!-- Company Info -->
+        <div class="space-y-4">
+          <div class="flex items-center space-x-2">
+            <img 
+              src="@/assets/image/SALogo.png"
+              alt="Supreme Agrivet Logo" 
+              class="h-12"
+            />
+            <div class="flex flex-col">
+              <span class="text-lg font-bold text-gray-900">Supreme</span>
+              <span class="text-base text-gray-700">Agrivet</span>
+            </div>
+          </div>
+          <p class="text-gray-600">
+            Lorem ipsum dolor sit amet, consectet adipiscing elit. Gravida volutpat sapien viverra. Etiam id sit donec integer tincidunt vestibulum
+          </p>
+          <!-- Social Media Icons -->
+          <div class="flex space-x-4">
+            <a href="#" class="text-gray-600 hover:text-[#FF9934]">
+              <FacebookIcon class="w-5 h-5" />
+            </a>
+            <a href="#" class="text-gray-600 hover:text-[#FF9934]">
+              <TwitterIcon class="w-5 h-5" />
+            </a>
+            <a href="#" class="text-gray-600 hover:text-[#FF9934]">
+              <YoutubeIcon class="w-5 h-5" />
+            </a>
+            <a href="#" class="text-gray-600 hover:text-[#FF9934]">
+              <InstagramIcon class="w-5 h-5" />
+            </a>
+          </div>
+        </div>
+
+        <!-- Account Links -->
+        <div>
+          <h3 class="font-bold text-lg mb-4">Account</h3>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-gray-600 hover:text-[#FF9934]">My Account</a></li>
+            <li><a href="#" class="text-gray-600 hover:text-[#FF9934]">Specials</a></li>
+            <li><a href="#" class="text-gray-600 hover:text-[#FF9934]">Order History</a></li>
+            <li><a href="#" class="text-gray-600 hover:text-[#FF9934]">Newsletter</a></li>
+            <li><a href="#" class="text-gray-600 hover:text-[#FF9934]">Contact Us</a></li>
+          </ul>
+        </div>
+
+        <!-- Information Links -->
+        <div>
+          <h3 class="font-bold text-lg mb-4">Information</h3>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-gray-600 hover:text-[#FF9934]">About Us</a></li>
+            <li><a href="#" class="text-gray-600 hover:text-[#FF9934]">Information</a></li>
+            <li><a href="#" class="text-gray-600 hover:text-[#FF9934]">Privacy Policy</a></li>
+            <li><a href="#" class="text-gray-600 hover:text-[#FF9934]">Terms Of Use</a></li>
+            <li><a href="#" class="text-gray-600 hover:text-[#FF9934]">Privacy Policy</a></li>
+          </ul>
+        </div>
+
+        <!-- Contact Information -->
+        <div>
+          <h3 class="font-bold text-lg mb-4">Contact Information</h3>
+          <ul class="space-y-2">
+            <li class="flex items-start space-x-2">
+              <MapPinIcon class="w-5 h-5 text-[#FF9934] flex-shrink-0 mt-1" />
+              <span class="text-gray-600">4005 Silver Business Point India</span>
+            </li>
+            <li class="flex items-center space-x-2">
+              <PhoneIcon class="w-5 h-5 text-[#FF9934]" />
+              <span class="text-gray-600">123456789</span>
+            </li>
+            <li class="flex items-center space-x-2">
+              <MailIcon class="w-5 h-5 text-[#FF9934]" />
+              <span class="text-gray-600">demoexample@gmail.com</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </footer>
+</template>
+
+<script setup>
+import { 
+  FacebookIcon, 
+  TwitterIcon, 
+  YoutubeIcon, 
+  InstagramIcon,
+  MapPinIcon,
+  PhoneIcon,
+  MailIcon,
+  ArrowRightIcon
+} from 'lucide-vue-next'
+</script>
+

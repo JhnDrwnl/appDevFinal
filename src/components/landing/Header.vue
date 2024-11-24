@@ -1,87 +1,177 @@
+<!-- components/landing/Header.vue -->
 <template>
-  <header class="bg-white">
-    <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between h-20">
-        <!-- Logo and Brand -->
-        <div class="flex items-center">
-          <router-link to="/" class="flex items-center space-x-2">
-            <svg class="w-8 h-8 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M13.5 2C13.5 2 15.834 2.66 18.666 4.666C21.5 6.666 21.5 9.334 21.5 9.334V14.666C21.5 14.666 21.5 17.334 18.666 19.334C15.834 21.334 13.5 22 13.5 22C13.5 22 11.166 21.334 8.334 19.334C5.5 17.334 5.5 14.666 5.5 14.666V9.334C5.5 9.334 5.5 6.666 8.334 4.666C11.166 2.66 13.5 2 13.5 2Z"/>
-            </svg>
-            <span class="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
-              DarwinAppdev
-            </span>
+  <header class="bg-white shadow-sm">
+    <nav class="max-w-7xl mx-auto px-8">
+      <div class="flex justify-between items-center h-24">
+        <!-- Left side with logo and company name -->
+        <div class="flex items-center space-x-4">
+          <router-link to="/" class="flex items-center">
+            <img 
+              src="@/assets/image/SALogo.png"
+              alt="Supreme Agrivet Logo" 
+              class="h-14 w-auto"
+            />
+            <div class="ml-2 flex flex-col">
+              <span class="text-xl font-bold text-gray-900 font-sans leading-tight">Supreme</span>
+              <span class="text-lg font-medium text-gray-700 font-serif -mt-1">Agrivet</span>
+            </div>
           </router-link>
         </div>
 
-        <!-- Desktop Navigation -->
-        <div class="hidden md:flex md:items-center md:space-x-8">
-          <router-link
+        <!-- Centered navigation -->
+        <div class="flex-1 flex justify-center items-center space-x-10">
+          <!-- SA Dropdown (without symbol) -->
+          <div class="relative group">
+            <button 
+              @mouseenter="showDropdown"
+              @mouseleave="hideDropdownIfNotClicked"
+              @click="toggleDropdownClick"
+              class="text-sm font-medium transition-colors duration-200 text-gray-700 hover:text-[#FF9B50] relative"
+              :class="{ 'text-[#FF9B50]': isDropdownOpen }"
+            >
+              SA
+              <span 
+                class="absolute bottom-0 left-0 w-full h-0.5 bg-[#FF9B50] transform transition-transform duration-200"
+                :class="{ 'scale-x-100': isDropdownOpen, 'scale-x-0 group-hover:scale-x-100': !isDropdownOpen }"
+              ></span>
+            </button>
+            <div 
+              v-show="isDropdownOpen" 
+              @mouseenter="showDropdown"
+              @mouseleave="hideDropdownIfNotClicked"
+              class="absolute left-0 mt-2 w-[600px] bg-white shadow-lg rounded-md overflow-hidden z-20"
+            >
+              <div class="p-4 flex space-x-8">
+                <div>
+                  <h3 class="text-sm font-semibold text-gray-900 mb-2">Live Poultry</h3>
+                  <div class="flex flex-col space-y-1">
+                    <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Chicks</a>
+                    <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Pullets</a>
+                    <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Layers</a>
+                  </div>
+                </div>
+                <div>
+                  <h3 class="text-sm font-semibold text-gray-900 mb-2">Chicken Feed</h3>
+                  <div class="flex flex-col space-y-1">
+                    <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Starter Feed</a>
+                    <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Grower Feed</a>
+                    <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Layer Feed</a>
+                  </div>
+                </div>
+                <div>
+                  <h3 class="text-sm font-semibold text-gray-900 mb-2">Poultry Health & Supplements</h3>
+                  <div class="flex flex-col space-y-1">
+                    <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Vitamins</a>
+                    <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Medications</a>
+                    <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Supplements</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- About and Contact links -->
+          <a
             v-for="item in navItems"
             :key="item.name"
-            :to="item.to"
-            class="text-sm font-medium transition-colors duration-200"
+            href="#"
+            @click.prevent="navigateTo(item.to, item.name)"
+            class="text-base font-medium transition-colors duration-200 relative group"
             :class="[
               $route.name === item.name
-                ? 'text-blue-600'
-                : 'text-gray-600 hover:text-blue-600'
+                ? 'text-[#FF9B50]'
+                : 'text-gray-700 hover:text-[#FF9B50]'
             ]"
           >
-            <div class="flex items-center space-x-1">
-              <span>{{ item.text }}</span>
-              <span v-if="item.badge" 
-                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                {{ item.badge }}
-              </span>
-            </div>
-          </router-link>
+            {{ item.text }}
+            <span 
+              class="absolute bottom-0 left-0 w-full h-0.5 bg-[#FF9B50] transform transition-transform duration-200"
+              :class="{
+                'scale-x-100': $route.name === item.name || activeNavItem === item.name,
+                'scale-x-0 group-hover:scale-x-100': $route.name !== item.name && activeNavItem !== item.name
+              }"
+            ></span>
+          </a>
+        </div>
 
-          <div class="flex items-center">
-            <div class="relative inline-flex h-10 rounded-full bg-gray-100 p-1 shadow-sm">
+        <!-- Right side icons -->
+        <div class="flex items-center space-x-6">
+          <!-- Search -->
+          <button class="text-gray-700 hover:text-[#FF9B50] focus:outline-none">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
+
+          <!-- Shopping Cart -->
+          <div class="relative">
+            <button class="text-gray-700 hover:text-[#FF9B50] focus:outline-none">
+              <ShoppingBasket class="w-6 h-6" />
+              <span class="absolute -top-1 -right-1 bg-[#FF9B50] text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                0
+              </span>
+            </button>
+          </div>
+
+          <!-- User Profile Icon -->
+          <div class="relative">
+            <button
+              @click="toggleUserDropdown"
+              class="focus:outline-none focus:ring-2 focus:ring-[#FF9B50]/10 rounded-xl transition-all duration-200"
+              aria-haspopup="true"
+              :aria-expanded="isUserDropdownOpen"
+            >
+              <img
+                class="w-10 h-10 rounded-xl object-cover ring-2 ring-gray-100"
+                :src="'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'40\' height=\'40\' viewBox=\'0 0 40 40\'%3E%3Crect width=\'40\' height=\'40\' fill=\'%23f0f2f5\'/%3E%3Cpath d=\'M20 22.5a6 6 0 1 0 0-12 6 6 0 0 0 0 12ZM10 31c0-2.75 5.5-5.5 11-5.5s11 2.75 11 5.5\' stroke=\'%23bec3c9\' stroke-width=\'2\' fill=\'none\'/%3E%3C/svg%3E'"
+                alt="User profile"
+              />
+            </button>
+            <div v-if="isUserDropdownOpen" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg overflow-hidden z-20">
               <router-link
                 :to="{ name: 'login' }"
-                class="relative inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-full transition-all duration-200"
-                :class="[$route.name === 'login' ? 'text-white bg-[#0095FF]' : 'text-gray-700 hover:text-gray-900']"
+                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                @click="closeUserDropdown"
               >
-                <span class="relative z-10">Log in</span>
+                Log in
               </router-link>
               <router-link
                 :to="{ name: 'register' }"
-                class="relative inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-full transition-all duration-200"
-                :class="[$route.name !== 'login' ? 'text-white bg-[#0095FF]' : 'text-gray-700 hover:text-gray-900']"
+                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                @click="closeUserDropdown"
               >
-                <span class="relative z-10">Register</span>
+                Register
               </router-link>
             </div>
           </div>
-        </div>
 
-        <!-- Mobile menu button -->
-        <div class="flex items-center md:hidden">
-          <button
-            @click="toggleMobileMenu"
-            class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-          >
-            <span class="sr-only">Open main menu</span>
-            <svg
-              class="w-6 h-6"
-              :class="{ 'hidden': mobileMenuOpen, 'block': !mobileMenuOpen }"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+          <!-- Mobile menu button -->
+          <div class="flex items-center md:hidden">
+            <button
+              @click="toggleMobileMenu"
+              class="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-[#FF9B50] hover:bg-gray-100 focus:outline-none"
             >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-            <svg
-              class="w-6 h-6"
-              :class="{ 'block': mobileMenuOpen, 'hidden': !mobileMenuOpen }"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+              <span class="sr-only">Open main menu</span>
+              <svg
+                class="w-7 h-7"
+                :class="{ 'hidden': mobileMenuOpen, 'block': !mobileMenuOpen }"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+              <svg
+                class="w-7 h-7"
+                :class="{ 'block': mobileMenuOpen, 'hidden': !mobileMenuOpen }"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -91,48 +181,49 @@
         :class="{ 'block': mobileMenuOpen, 'hidden': !mobileMenuOpen }"
       >
         <div class="pt-2 pb-3 space-y-1">
-          <router-link
-            v-for="item in navItems"
-            :key="item.name"
-            :to="item.to"
-            class="block px-3 py-2 text-base font-medium rounded-md transition-colors duration-200"
-            :class="[
-              $route.name === item.name
-                ? 'text-blue-600 bg-blue-50'
-                : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
-            ]"
-            @click="closeMobileMenu"
-          >
-            <div class="flex items-center space-x-1">
-              <span>{{ item.text }}</span>
-              <span v-if="item.badge" 
-                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                {{ item.badge }}
-              </span>
-            </div>
-          </router-link>
-        </div>
-        <div class="pt-4 pb-3 border-t border-gray-200">
-          <div class="px-3">
-            <div class="relative flex h-10 rounded-full bg-gray-100 p-1 shadow-sm">
-              <router-link
-                :to="{ name: 'login' }"
-                class="relative inline-flex flex-1 items-center justify-center px-4 py-2 text-sm font-medium rounded-full transition-all duration-200"
-                :class="[$route.name === 'login' ? 'text-white bg-[#0095FF]' : 'text-gray-700 hover:text-gray-900']"
-                @click="closeMobileMenu"
-              >
-                <span class="relative z-10">Log in</span>
-              </router-link>
-              <router-link
-                :to="{ name: 'register' }"
-                class="relative inline-flex flex-1 items-center justify-center px-4 py-2 text-sm font-medium rounded-full transition-all duration-200"
-                :class="[$route.name !== 'login' ? 'text-white bg-[#0095FF]' : 'text-gray-700 hover:text-gray-900']"
-                @click="closeMobileMenu"
-              >
-                <span class="relative z-10">Register</span>
-              </router-link>
+          <!-- SA Dropdown for mobile -->
+          <div class="relative">
+            <button @click="toggleMobileDropdown" class="w-full text-left block px-3 py-2 text-base font-medium text-gray-700 hover:text-[#FF9B50] hover:bg-gray-50 rounded-md">
+              SA
+            </button>
+            <div v-if="isMobileDropdownOpen" class="mt-2 space-y-2">
+              <div class="pl-4">
+                <h3 class="text-sm font-semibold text-gray-900 mb-2">Live Poultry</h3>
+                <div class="flex flex-col space-y-2">
+                  <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Chicks</a>
+                  <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Pullets</a>
+                  <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Layers</a>
+                </div>
+              </div>
+              <div class="pl-4">
+                <h3 class="text-sm font-semibold text-gray-900 mb-2">Chicken Feed</h3>
+                <div class="flex flex-col space-y-2">
+                  <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Starter Feed</a>
+                  <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Grower Feed</a>
+                  <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Layer Feed</a>
+                </div>
+              </div>
+              <div class="pl-4">
+                <h3 class="text-sm font-semibold text-gray-900 mb-2">Poultry Health & Supplements</h3>
+                <div class="flex flex-col space-y-2">
+                  <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Vitamins</a>
+                  <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Medications</a>
+                  <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Supplements</a>
+                </div>
+              </div>
             </div>
           </div>
+
+          <!-- Main navigation for mobile -->
+          <a
+            v-for="item in navItems"
+            :key="item.name"
+            href="#"
+            @click.prevent="navigateTo(item.to, item.name)"
+            class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-[#FF9B50] hover:bg-gray-50 rounded-md"
+          >
+            {{ item.text }}
+          </a>
         </div>
       </div>
     </nav>
@@ -140,26 +231,82 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ShoppingBasket } from 'lucide-vue-next'
 
 const route = useRoute()
+const router = useRouter()
 const mobileMenuOpen = ref(false)
+const isDropdownOpen = ref(false)
+const isMobileDropdownOpen = ref(false)
+const isUserDropdownOpen = ref(false)
+const activeNavItem = ref(null)
+const isDropdownClicked = ref(false)
 
 const navItems = [
-  { name: 'home', to: '/', text: 'Shop' },
-  { name: 'products', to: '/products', text: 'Products', badge: 'New' },
-  { name: 'categories', to: '/categories', text: 'Categories' },
-  { name: 'deals', to: '/deals', text: 'Deals' },
   { name: 'about', to: '/about', text: 'About' },
+  { name: 'latestproducts', to: '/latestproducts', text: 'Latest Products' },
   { name: 'contact', to: '/contact', text: 'Contact' },
 ]
 
 const toggleMobileMenu = () => {
   mobileMenuOpen.value = !mobileMenuOpen.value
+  if (!mobileMenuOpen.value) {
+    isMobileDropdownOpen.value = false
+  }
 }
 
 const closeMobileMenu = () => {
   mobileMenuOpen.value = false
+  isMobileDropdownOpen.value = false
 }
+
+const showDropdown = () => {
+  isDropdownOpen.value = true
+}
+
+const hideDropdownIfNotClicked = () => {
+  if (!isDropdownClicked.value) {
+    isDropdownOpen.value = false
+  }
+}
+
+const toggleDropdownClick = () => {
+  isDropdownClicked.value = !isDropdownClicked.value
+  isDropdownOpen.value = isDropdownClicked.value
+}
+
+const toggleMobileDropdown = () => {
+  isMobileDropdownOpen.value = !isMobileDropdownOpen.value
+}
+
+const toggleUserDropdown = () => {
+  isUserDropdownOpen.value = !isUserDropdownOpen.value
+}
+
+const closeUserDropdown = () => {
+  isUserDropdownOpen.value = false
+}
+
+const navigateTo = (path, name) => {
+  if (route.path !== path) {
+    router.push(path)
+  }
+  activeNavItem.value = name
+  isDropdownOpen.value = false
+  isDropdownClicked.value = false
+  closeMobileMenu()
+  
+  // Emit an event to trigger scrolling in the parent component
+  window.dispatchEvent(new CustomEvent('scroll-to-section', { detail: name }))
+}
+
+// Reset active nav item and dropdown state when route changes
+watch(() => route.name, () => {
+  activeNavItem.value = null
+  isDropdownOpen.value = false
+  isDropdownClicked.value = false
+})
 </script>
+

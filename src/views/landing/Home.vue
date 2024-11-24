@@ -1,56 +1,106 @@
+<!-- views/landing/Home.vue -->
 <template>
-  <section class="bg-white py-12 sm:py-16 lg:py-20">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="text-center">
-        <h2 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-          Why Shop with DarwinAppdev
-        </h2>
-        <p class="mt-4 text-xl text-gray-600">
-          Discover the advantages of choosing our platform for your online shopping needs.
-        </p>
-      </div>
+  <div class="min-h-screen flex flex-col bg-gray-50">
+    <!-- Promotional Banner -->
+    <PromotionalBanner />
 
-      <div class="mt-16">
-        <dl class="space-y-10 md:space-y-0 md:grid md:grid-cols-2 md:gap-x-8 md:gap-y-10">
-          <div v-for="feature in features" :key="feature.name" class="relative">
-            <dt>
-              <div class="absolute flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
-                <component :is="feature.icon" class="h-6 w-6" aria-hidden="true" />
-              </div>
-              <p class="ml-16 text-lg leading-6 font-medium text-gray-900">{{ feature.name }}</p>
-            </dt>
-            <dd class="mt-2 ml-16 text-base text-gray-500">{{ feature.description }}</dd>
-          </div>
-        </dl>
+    <!-- Header -->
+    <Header />
+    
+    <!-- Main Content with gradient background -->
+    <main class="flex-grow relative">
+      <!-- Carousel -->
+      <Carousel />
+      
+      <!-- Content -->
+      <div class="relative">
+        <About ref="aboutSection" />
+        <LatestProducts ref="productsSection" />
+        <Testimonials />
+        <Education />
+        <router-view v-if="!isDefaultRoute" v-slot="{ Component }">
+          <transition name="fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
       </div>
-    </div>
-  </section>
+    </main>
+
+    <!-- Footer -->
+    <Footer />
+
+    <!-- Bottom Bar -->
+    <BottomBar />
+
+    <!-- Scroll to Top Button -->
+    <ScrollToTop />
+  </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { Truck, ShieldCheck, Repeat, ThumbsUp } from 'lucide-vue-next'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { useRoute } from 'vue-router'
+import Header from '@/components/landing/Header.vue'
+import Footer from '@/components/landing/Footer.vue'
+import Carousel from '@/components/landing/Carousel.vue'
+import About from '@/components/landing/About.vue'
+import LatestProducts from '@/components/landing/LatestProducts.vue'
+import Testimonials from '@/components/landing/Testimonials.vue'
+import Education from '@/components/landing/Education.vue'
+import ScrollToTop from '@/components/common/ScrollToTop.vue'
+import PromotionalBanner from '@/components/landing/PromotionalBanner.vue'
+import BottomBar from '@/components/common/BottomBar.vue'
 
-const features = ref([
-  {
-    name: 'Free and Fast Shipping',
-    description: 'Enjoy free shipping on all orders over $50. Most items arrive within 2-3 business days.',
-    icon: Truck
-  },
-  {
-    name: 'Secure Payments',
-    description: 'Shop with confidence using our encrypted and secure payment systems.',
-    icon: ShieldCheck
-  },
-  {
-    name: 'Easy Returns',
-    description: 'Not satisfied? Return any item within 30 days for a full refund, no questions asked.',
-    icon: Repeat
-  },
-  {
-    name: 'Top-Notch Support',
-    description: '24/7 customer support to assist you with any questions or concerns about your purchase.',
-    icon: ThumbsUp
+const route = useRoute()
+const aboutSection = ref(null)
+const productsSection = ref(null)
+
+const isDefaultRoute = computed(() => {
+  return route.name === 'Home' || route.name === 'About' || route.name === 'Products'
+})
+
+const scrollToSection = (sectionName) => {
+  let section
+  if (sectionName === 'about') {
+    section = aboutSection.value
+  } else if (sectionName === 'latestproducts') {
+    section = productsSection.value
   }
-])
+
+  if (section) {
+    section.$el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+}
+
+const handleScrollToSection = (event) => {
+  scrollToSection(event.detail)
+}
+
+onMounted(() => {
+  window.addEventListener('scroll-to-section', handleScrollToSection)
+
+  // Initial scroll based on the route
+  if (route.name === 'About') {
+    scrollToSection('about')
+  } else if (route.name === 'Products') {
+    scrollToSection('latestproducts')
+  }
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll-to-section', handleScrollToSection)
+})
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>
+

@@ -1,3 +1,4 @@
+layouts/LandingLayout.vue
 <template>
   <div class="min-h-screen flex flex-col bg-gray-50">
     <!-- Header -->
@@ -5,9 +6,6 @@
     
     <!-- Main Content with gradient background -->
     <main class="flex-grow relative">
-      <!-- Background gradient -->
-      <div class="absolute inset-0 bg-gradient-to-b from-white to-gray-50"></div>
-      
       <!-- Content -->
       <div class="relative">
         <router-view v-slot="{ Component }">

@@ -1,18 +1,18 @@
 // src/router/landing.routes.js
-import LandingLayout from '@/layouts/LandingLayout.vue'
-import Home from '@/views/landing/Home.vue'
-import About from '@/views/landing/About.vue'
-import Contact from '@/views/landing/Contact.vue'
+import HomeLayout from '@/views/landing/Home.vue'
+import About from '@/components/landing/About.vue'
+import LatestProducts from '@/components/landing/LatestProducts.vue'
+// import Contact from '@/components/landing/Contact.vue'
 
 export default [
   {
     path: '/',
-    component: LandingLayout,
+    component: HomeLayout,
     children: [
       {
         path: '',
         name: 'Home',
-        component: Home,
+        component: About,
       },
       {
         path: 'about',
@@ -20,10 +20,15 @@ export default [
         component: About,
       },
       {
-        path: 'contact',
-        name: 'Contact',
-        component: Contact,
+        path: 'latestproducts',
+        name: 'Products',
+        component: LatestProducts,
       },
+      // {
+      //   path: 'contact',
+      //   name: 'Contact',
+      //   component: Contact,
+      // },
     ],
   },
 ]

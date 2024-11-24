@@ -1,5 +1,5 @@
 // src/router/auth.routes.js
-import LandingLayout from '@/layouts/LandingLayout.vue'
+import AuthLayout from '@/layouts/AuthLayout.vue'
 import LoginForm from '@/views/auth/LoginForm.vue'
 import RegisterForm from '@/views/auth/RegisterForm.vue'
 import EmailVerificationHandler from '@/views/auth/EmailVerificationHandler.vue'
@@ -7,7 +7,7 @@ import EmailVerificationHandler from '@/views/auth/EmailVerificationHandler.vue'
 export default [
   {
     path: '/auth',
-    component: LandingLayout,
+    component: AuthLayout,
     children: [
       {
         path: 'login',
