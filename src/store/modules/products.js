@@ -100,25 +100,37 @@ export const useProductStore = defineStore('products', {
 
     async uploadImage(file, productId, isThumbnail = false) {
       try {
-        const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`
-        const path = `products/${fileName}`
+        let fileName, fileBlob;
         
-        const fileRef = storageRef(storage, path)
-        await uploadBytes(fileRef, file)
-        const downloadURL = await getDownloadURL(fileRef)
+        if (file instanceof Blob) {
+          fileName = file.name || `${Date.now()}_image.jpg`;
+          fileBlob = file;
+        } else if (typeof file === 'string' && file.startsWith('data:')) {
+          fileName = `${Date.now()}_image.jpg`;
+          fileBlob = await fetch(file).then(r => r.blob());
+        } else {
+          throw new Error('Invalid file type');
+        }
+
+        const safeFileName = fileName.replace(/[^a-zA-Z0-9.]/g, '_');
+        const path = `products/${productId}/${safeFileName}`;
+        
+        const fileRef = storageRef(storage, path);
+        await uploadBytes(fileRef, fileBlob);
+        const downloadURL = await getDownloadURL(fileRef);
         
         return { 
           success: true, 
           url: downloadURL, 
           path,
-          fileName 
-        }
+          fileName: safeFileName
+        };
       } catch (error) {
-        console.error('Error uploading image:', error)
+        console.error('Error uploading image:', error);
         return { 
           success: false, 
           error: error.message 
-        }
+        };
       }
     },
 
@@ -128,12 +140,10 @@ export const useProductStore = defineStore('products', {
       let uploadedFiles = []
 
       try {
-        // Validate required fields
         if (!productData.name || !productData.price) {
           throw new Error('Name and price are required')
         }
 
-        // Upload thumbnail
         let thumbnailURL = null
         let thumbnailPath = null
         if (productData.thumbnailFile) {
@@ -146,7 +156,6 @@ export const useProductStore = defineStore('products', {
           throw new Error('Thumbnail is required')
         }
 
-        // Create product document in Firestore first to get the productId
         const docRef = await addDoc(collection(db, 'products'), {
           name: productData.name,
           description: productData.description,
@@ -165,7 +174,6 @@ export const useProductStore = defineStore('products', {
 
         const productId = docRef.id
 
-        // Upload additional images
         const imageURLs = []
         const imagePaths = []
         if (productData.imageFiles?.length > 0) {
@@ -178,13 +186,11 @@ export const useProductStore = defineStore('products', {
           }
         }
 
-        // Update the product document with image URLs and paths
         await updateDoc(docRef, {
           imageURLs: imageURLs,
           imagePaths: imagePaths
         })
 
-        // Create the new product object
         const newProduct = {
           id: productId,
           ...productData,
@@ -199,14 +205,12 @@ export const useProductStore = defineStore('products', {
           updatedAt: new Date()
         }
 
-        // Update local state
         this.products = [newProduct, ...this.products]
 
         return { success: true, product: newProduct }
       } catch (error) {
         console.error('Error adding product:', error)
         
-        // Cleanup any uploaded files if there was an error
         if (uploadedFiles.length > 0) {
           for (const path of uploadedFiles) {
             try {
@@ -226,20 +230,17 @@ export const useProductStore = defineStore('products', {
     },
 
     async updateProduct(productId, updatedData) {
-      this.isLoading = true
-      this.error = null
-      let uploadedFiles = []
-      let oldImagePaths = []
+      this.isLoading = true;
+      this.error = null;
+      let uploadedFiles = [];
 
       try {
-        // Get current product data
-        const productRef = doc(db, 'products', productId)
-        const productSnap = await getDoc(productRef)
+        const productRef = doc(db, 'products', productId);
+        const productSnap = await getDoc(productRef);
         if (!productSnap.exists()) {
-          throw new Error('Product not found')
+          throw new Error('Product not found');
         }
-        const currentData = productSnap.data()
-        oldImagePaths = [...(currentData.imagePaths || []), currentData.thumbnailPath].filter(Boolean)
+        const currentData = productSnap.data();
 
         const firestoreData = {
           name: updatedData.name,
@@ -252,154 +253,175 @@ export const useProductStore = defineStore('products', {
           stockQuantity: parseInt(updatedData.stockQuantity) || 0,
           date: updatedData.date,
           updatedAt: serverTimestamp()
-        }
+        };
 
-        let imageURLs = []
-        let imagePaths = []
-        let thumbnailURL = updatedData.thumbnailURL
-        let thumbnailPath = currentData.thumbnailPath
+        let imageURLs = [...(currentData.imageURLs || [])];
+        let imagePaths = [...(currentData.imagePaths || [])];
 
-        // Handle thumbnail update or removal
-        if (updatedData.thumbnailFile) {
-          const result = await this.uploadImage(updatedData.thumbnailFile, productId, true)
-          if (!result.success) throw new Error(result.error)
-          
-          thumbnailURL = result.url
-          thumbnailPath = result.path
-          uploadedFiles.push(result.path)
-        } else if (updatedData.thumbnailURL === null) {
-          // Thumbnail was removed
-          thumbnailURL = null
-          if (currentData.thumbnailPath) {
-            try {
-              const oldFileRef = storageRef(storage, currentData.thumbnailPath)
-              await deleteObject(oldFileRef)
-            } catch (error) {
-              console.error('Error deleting old thumbnail:', error)
-            }
-          }
-          thumbnailPath = null
-        }
+        // Handle existing images
+        const keptImages = updatedData.images.filter(img => !img.isNew).map(img => img.url);
+        imageURLs = imageURLs.filter(url => keptImages.includes(url));
+        imagePaths = imagePaths.filter(path => keptImages.some(url => url.includes(path.split('/').pop())));
 
-        // Handle image updates
+        // Handle new images
         for (const image of updatedData.images) {
-          if (image.startsWith('data:')) {
-            // This is a new image, upload it
-            const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`
-            const path = `products/${fileName}`
-            const fileRef = storageRef(storage, path)
-            await uploadBytes(fileRef, await (await fetch(image)).blob())
-            const downloadURL = await getDownloadURL(fileRef)
-            imageURLs.push(downloadURL)
-            imagePaths.push(path)
-            uploadedFiles.push(path)
-          } else {
-            // This is an existing image
-            const existingImagePath = currentData.imagePaths?.find(path => path.includes(image.split('?')[0]))
-            if (existingImagePath) {
-              imageURLs.push(image)
-              imagePaths.push(existingImagePath)
-            }
+          if (image.isNew) {
+            const result = await this.uploadImage(image.url, productId);
+            if (!result.success) throw new Error(result.error);
+            imageURLs.push(result.url);
+            imagePaths.push(result.path);
+            uploadedFiles.push(result.path);
           }
         }
 
-        // Delete removed images
-        for (const oldPath of oldImagePaths) {
-          if (!imagePaths.includes(oldPath) && oldPath !== thumbnailPath) {
-            try {
-              const oldFileRef = storageRef(storage, oldPath)
-              await deleteObject(oldFileRef)
-            } catch (error) {
-              console.error(`Error deleting old image at path ${oldPath}:`, error)
-            }
-          }
+        firestoreData.imageURLs = imageURLs;
+        firestoreData.imagePaths = imagePaths;
+
+        let thumbnailURL = updatedData.thumbnailURL;
+        let thumbnailPath = currentData.thumbnailPath;
+
+        if (updatedData.thumbnailFile) {
+          const result = await this.uploadImage(updatedData.thumbnailFile, productId, true);
+          if (!result.success) throw new Error(result.error);
+          
+          thumbnailURL = result.url;
+          thumbnailPath = result.path;
+          uploadedFiles.push(result.path);
+        } else if (updatedData.thumbnailURL === null) {
+          thumbnailURL = null;
+          thumbnailPath = null;
         }
 
-        // Update document with all changes
-        firestoreData.imageURLs = imageURLs
-        firestoreData.imagePaths = imagePaths
-        firestoreData.thumbnailURL = thumbnailURL
-        firestoreData.thumbnailPath = thumbnailPath
+        firestoreData.thumbnailURL = thumbnailURL;
+        firestoreData.thumbnailPath = thumbnailPath;
 
-        await updateDoc(productRef, firestoreData)
+        await updateDoc(productRef, firestoreData);
 
-        // Update local state
-        const index = this.products.findIndex(p => p.id === productId)
+        const index = this.products.findIndex(p => p.id === productId);
         if (index !== -1) {
           this.products[index] = {
             ...this.products[index],
             ...firestoreData,
             id: productId,
             updatedAt: new Date()
+          };
+        }
+
+        return { success: true, id: productId };
+      } catch (error) {
+        console.error('Error updating product:', error);
+        
+        for (const path of uploadedFiles) {
+          try {
+            const fileRef = storageRef(storage, path);
+            await deleteObject(fileRef);
+            console.log(`Cleaned up file at path ${path} due to error`);
+          } catch (deleteError) {
+            console.error('Error cleaning up file:', deleteError);
           }
         }
 
-        return { success: true, id: productId }
-      } catch (error) {
-        console.error('Error updating product:', error)
-        
-        // Cleanup newly uploaded files if there was an error
-        if (uploadedFiles.length > 0) {
-          for (const path of uploadedFiles) {
-            try {
-              const fileRef = storageRef(storage, path)
-              await deleteObject(fileRef)
-            } catch (deleteError) {
-              console.error('Error cleaning up file:', deleteError)
+        this.error = error.message;
+        return { success: false, error: error.message };
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async cleanupUnusedImages(productId) {
+      try {
+        const productRef = doc(db, 'products', productId);
+        const productSnap = await getDoc(productRef);
+        if (!productSnap.exists()) {
+          throw new Error('Product not found');
+        }
+        const productData = productSnap.data();
+
+        const currentImagePaths = productData.imagePaths || [];
+        const currentImageURLs = productData.imageURLs || [];
+
+        const imagesToDelete = currentImagePaths.filter(path => 
+          !currentImageURLs.some(url => url.includes(path.split('/').pop()))
+        );
+
+        for (const pathToDelete of imagesToDelete) {
+          try {
+            const fileRef = storageRef(storage, pathToDelete);
+            await deleteObject(fileRef);
+            console.log(`Successfully deleted unused image at path ${pathToDelete}`);
+          } catch (error) {
+            if (error.code === 'storage/object-not-found') {
+              console.log(`Image at path ${pathToDelete} already deleted or doesn't exist`);
+            } else {
+              console.error(`Error deleting unused image at path ${pathToDelete}:`, error);
             }
           }
         }
 
-        this.error = error.message
-        return { success: false, error: error.message }
-      } finally {
-        this.isLoading = false
+        // Update the product document to remove references to deleted images
+        await updateDoc(productRef, {
+          imagePaths: currentImagePaths.filter(path => !imagesToDelete.includes(path))
+        });
+
+      } catch (error) {
+        console.error('Error cleaning up unused images:', error);
       }
     },
 
     async deleteProduct(productId) {
-      this.isLoading = true
-      this.error = null
+      this.isLoading = true;
+      this.error = null;
 
       try {
-        // Get product data first
-        const productRef = doc(db, 'products', productId)
-        const productSnap = await getDoc(productRef)
+        const productRef = doc(db, 'products', productId);
+        const productSnap = await getDoc(productRef);
         
         if (!productSnap.exists()) {
-          throw new Error('Product not found')
+          throw new Error('Product not found');
         }
 
-        const productData = productSnap.data()
+        const productData = productSnap.data();
 
-        // Delete all associated images from storage
-        const imagesToDelete = [...(productData.imagePaths || []), productData.thumbnailPath].filter(Boolean)
+        const imagesToDelete = [...(productData.imagePaths || []), productData.thumbnailPath].filter(Boolean);
+        const deletionErrors = [];
+
         for (const path of imagesToDelete) {
           try {
-            const fileRef = storageRef(storage, path)
-            await deleteObject(fileRef)
+            const fileRef = storageRef(storage, path);
+            await deleteObject(fileRef);
+            console.log(`Successfully deleted file at path ${path}`);
           } catch (error) {
-            console.error(`Error deleting file at path ${path}:`, error)
-            // Continue with deletion even if some files fail to delete
+            if (error.code === 'storage/object-not-found') {
+              console.log(`File at path ${path} already deleted or doesn't exist`);
+            } else {
+              console.error(`Error deleting file at path ${path}:`, error);
+              deletionErrors.push({ path, error: error.message });
+            }
           }
         }
 
-        // Delete the product document
-        await deleteDoc(productRef)
+        await deleteDoc(productRef);
 
-        // Update local state
-        this.products = this.products.filter(p => p.id !== productId)
+        this.products = this.products.filter(p => p.id !== productId);
         if (this.currentProduct?.id === productId) {
-          this.currentProduct = null
+          this.currentProduct = null;
         }
 
-        return { success: true }
+        if (deletionErrors.length > 0) {
+          console.warn('Some files could not be deleted:', deletionErrors);
+          return { 
+            success: true, 
+            warning: 'Product deleted, but some associated files could not be removed from storage.'
+          };
+        }
+
+        return { success: true };
       } catch (error) {
-        console.error('Error deleting product:', error)
-        this.error = error.message
-        return { success: false, error: error.message }
+        console.error('Error deleting product:', error);
+        this.error = error.message;
+        return { success: false, error: error.message };
       } finally {
-        this.isLoading = false
+        this.isLoading = false;
       }
     },
 
@@ -439,3 +461,6 @@ export const useProductStore = defineStore('products', {
     }
   }
 })
+
+
+

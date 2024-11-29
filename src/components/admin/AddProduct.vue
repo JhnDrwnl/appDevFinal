@@ -1,4 +1,4 @@
-<!-- components/admin/AddProducts.vue -->
+<!-- components/admin/AddProduct.vue -->
 <template>
   <div>
     <div>

@@ -1,4 +1,4 @@
-<!-- components/admin/EditProducts.vue -->
+<!-- components/admin/EditProduct.vue -->
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
@@ -59,13 +59,13 @@
           <h2 class="text-lg font-medium text-gray-900 mb-4">Media</h2>
           <div class="grid grid-cols-4 gap-4 mb-4">
             <div
-              v-for="image in product.images"
-              :key="image"
+              v-for="(image, index) in product.images"
+              :key="index"
               class="relative aspect-square rounded-lg overflow-hidden border border-gray-200"
             >
-              <img :src="image" class="w-full h-full object-cover" alt="Product image" />
+              <img :src="image.url" class="w-full h-full object-cover" alt="Product image" />
               <button
-                @click="removeImage(image)"
+                @click="removeImage(index)"
                 class="absolute top-2 right-2 p-1 bg-white rounded-full shadow-sm hover:bg-gray-100"
               >
                 <XIcon class="w-4 h-4" />
@@ -202,12 +202,23 @@
         <!-- Thumbnail -->
         <div class="bg-white p-6 rounded-lg border border-gray-200">
           <h2 class="text-lg font-medium text-gray-900 mb-4">Thumbnail</h2>
-          <div class="aspect-square rounded-lg overflow-hidden mb-4">
+          <div class="relative aspect-video rounded-lg overflow-hidden mb-4">
+            <div v-if="!thumbnailPreview && !product.thumbnail" class="w-full h-full bg-gray-100 flex items-center justify-center">
+              <ImageIcon class="w-12 h-12 text-gray-400" />
+            </div>
             <img
-              :src="thumbnailPreview || product.thumbnail || '/placeholder.svg?height=300&width=300'"
+              v-else
+              :src="thumbnailPreview || product.thumbnail"
               class="w-full h-full object-cover"
               alt="Product thumbnail"
             />
+            <button
+              v-if="thumbnailPreview || product.thumbnail"
+              @click="removeThumbnail"
+              class="absolute top-2 right-2 p-1 bg-white rounded-full shadow-sm hover:bg-gray-100"
+            >
+              <XIcon class="w-4 h-4" />
+            </button>
           </div>
           <div
             class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center"
@@ -231,13 +242,6 @@
               </p>
             </div>
           </div>
-          <button
-            v-if="product.thumbnail || thumbnailPreview"
-            @click="removeThumbnail"
-            class="mt-4 px-4 py-2 text-sm text-red-600 hover:text-red-800"
-          >
-            Remove Thumbnail
-          </button>
         </div>
 
         <!-- Product Details -->
@@ -282,7 +286,7 @@
                 />
                 <button
                   @click="addTag"
-                  class="ml-2 px-4 py-2 bg-[#0095FF] text-white rounded-lg hover:bg-[#0077CC]"
+                  class="ml-2 px-4 py-2 bg-[#FF9934] text-white rounded-lg hover:bg-[#E08824]"
                 >
                   Add
                 </button>
@@ -304,7 +308,7 @@
       <button
         @click="saveProduct"
         :disabled="isSaving"
-        class="px-4 py-2 bg-[#E08824] text-white rounded-full hover:bg-[#C67820] disabled:opacity-50 transition-colors duration-200"
+        class="px-4 py-2 bg-[#FF9934] text-white rounded-full hover:bg-[#E08824] disabled:opacity-50 transition-colors duration-200"
       >
         {{ isSaving ? 'Saving...' : 'Save Changes' }}
       </button>
@@ -335,8 +339,6 @@ import {
   Image as ImageIcon,
   X as XIcon
 } from 'lucide-vue-next'
-import { storage } from '@/services/firebase'
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 
 const props = defineProps({
   productId: {
@@ -393,6 +395,9 @@ const editor = useEditor({
       bulletList: false,
       bold: false,
       italic: false,
+      paragraph: false,
+      document: false,
+      text: false,
     })
   ],
   content: '',
@@ -505,7 +510,7 @@ onMounted(async () => {
       ...currentProduct,
       price: parseFloat(currentProduct.price),
       discountValue: currentProduct.discountValue || 0,
-      images: currentProduct.imageURLs || [],
+      images: (currentProduct.imageURLs || []).map(url => ({ url, isNew: false })),
       thumbnail: currentProduct.thumbnailURL || '',
       tags: currentProduct.tags || [],
       stockQuantity: currentProduct.stockQuantity || 0
@@ -535,22 +540,37 @@ const handleDrop = async (event) => {
 }
 
 const handleFiles = async (files) => {
-  for (const file of files) {
-    if (file.type.startsWith('image/')) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        product.value.images.push(e.target.result)
+  const newImages = await Promise.all(
+    Array.from(files).map(async (file) => {
+      if (file.type.startsWith('image/')) {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            resolve({ url: e.target.result, isNew: true });
+          };
+          reader.readAsDataURL(file);
+        });
       }
-      reader.readAsDataURL(file)
-    }
-  }
+      return null;
+    })
+  );
+
+  // Filter out any null values (non-image files)
+  const validNewImages = newImages.filter(img => img !== null);
+
+  // Append new images to the existing ones
+  product.value.images = [...product.value.images, ...validNewImages];
 }
 
 const handleThumbnailSelect = async (event) => {
   const file = event.target.files[0]
   if (file && file.type.startsWith('image/')) {
     thumbnailFile.value = file
-    thumbnailPreview.value = URL.createObjectURL(file)
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      thumbnailPreview.value = e.target.result
+    }
+    reader.readAsDataURL(file)
   }
 }
 
@@ -558,12 +578,16 @@ const handleThumbnailDrop = async (event) => {
   const file = event.dataTransfer.files[0]
   if (file && file.type.startsWith('image/')) {
     thumbnailFile.value = file
-    thumbnailPreview.value = URL.createObjectURL(file)
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      thumbnailPreview.value = e.target.result
+    }
+    reader.readAsDataURL(file)
   }
 }
 
-const removeImage = (imageUrl) => {
-  product.value.images = product.value.images.filter(url => url !== imageUrl)
+const removeImage = (index) => {
+  product.value.images.splice(index, 1)
 }
 
 const removeThumbnail = () => {
@@ -592,17 +616,22 @@ const saveProduct = async () => {
       ...product.value,
       description: editor.value?.getHTML() || '',
       price: parseFloat(product.value.price),
-      images: product.value.images,
+      images: product.value.images.map(img => ({
+        url: img.url,
+        isNew: img.isNew
+      })),
       stockQuantity: parseInt(product.value.stockQuantity) || 0,
       thumbnailURL: product.value.thumbnail
     }
 
     if (thumbnailFile.value) {
-      updatedData.thumbnailFile = thumbnailFile.value
+      updatedData.thumbnailFile = thumbnailPreview.value // Use the data URL
     }
 
     const result = await productStore.updateProduct(props.productId, updatedData)
     if (result.success) {
+      // Call cleanupUnusedImages after successful update
+      await productStore.cleanupUnusedImages(props.productId)
       emit('save', props.productId, updatedData)
     } else {
       throw new Error(result.error || 'Failed to update product')
@@ -682,3 +711,4 @@ const saveProduct = async () => {
   color: #374151;
 }
 </style>
+
