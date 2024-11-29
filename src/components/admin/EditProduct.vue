@@ -5,7 +5,7 @@
       <h1 class="text-2xl font-semibold text-gray-900">Edit Product</h1>
       <button
         @click="$emit('cancel')"
-        class="text-sm text-[#0095FF] hover:text-[#0077CC]"
+        class="text-sm text-[#FF9934] hover:text-[#E08824] rounded-full px-4 py-2 transition-colors duration-200"
       >
         Back to Products
       </button>
@@ -231,6 +231,13 @@
               </p>
             </div>
           </div>
+          <button
+            v-if="product.thumbnail || thumbnailPreview"
+            @click="removeThumbnail"
+            class="mt-4 px-4 py-2 text-sm text-red-600 hover:text-red-800"
+          >
+            Remove Thumbnail
+          </button>
         </div>
 
         <!-- Product Details -->
@@ -290,14 +297,14 @@
     <div class="mt-6 flex justify-end space-x-3">
       <button
         @click="$emit('cancel')"
-        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+        class="px-4 py-2 border border-gray-300 rounded-full text-gray-700 hover:bg-gray-50 transition-colors duration-200"
       >
         Cancel
       </button>
       <button
         @click="saveProduct"
         :disabled="isSaving"
-        class="px-4 py-2 bg-[#0095FF] text-white rounded-lg hover:bg-[#0077CC] disabled:opacity-50"
+        class="px-4 py-2 bg-[#E08824] text-white rounded-full hover:bg-[#C67820] disabled:opacity-50 transition-colors duration-200"
       >
         {{ isSaving ? 'Saving...' : 'Save Changes' }}
       </button>
@@ -492,7 +499,7 @@ const isSaving = ref(false)
 
 // Load current product data
 onMounted(async () => {
-  const currentProduct = products.value.find(p => p.id === props.productId)
+  const currentProduct = await productStore.fetchProduct(props.productId)
   if (currentProduct) {
     product.value = {
       ...currentProduct,
@@ -530,14 +537,11 @@ const handleDrop = async (event) => {
 const handleFiles = async (files) => {
   for (const file of files) {
     if (file.type.startsWith('image/')) {
-      try {
-        const imageRef = storageRef(storage, `products/${props.productId}/${file.name}`)
-        await uploadBytes(imageRef, file)
-        const imageURL = await getDownloadURL(imageRef)
-        product.value.images.push(imageURL)
-      } catch (error) {
-        console.error('Error uploading image:', error)
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        product.value.images.push(e.target.result)
       }
+      reader.readAsDataURL(file)
     }
   }
 }
@@ -562,6 +566,12 @@ const removeImage = (imageUrl) => {
   product.value.images = product.value.images.filter(url => url !== imageUrl)
 }
 
+const removeThumbnail = () => {
+  product.value.thumbnail = null
+  thumbnailFile.value = null
+  thumbnailPreview.value = null
+}
+
 // Tag management
 const addTag = () => {
   if (newTag.value && !product.value.tags.includes(newTag.value)) {
@@ -582,20 +592,24 @@ const saveProduct = async () => {
       ...product.value,
       description: editor.value?.getHTML() || '',
       price: parseFloat(product.value.price),
-      imageURLs: product.value.images,
-      stockQuantity: parseInt(product.value.stockQuantity) || 0
+      images: product.value.images,
+      stockQuantity: parseInt(product.value.stockQuantity) || 0,
+      thumbnailURL: product.value.thumbnail
     }
 
     if (thumbnailFile.value) {
-      const thumbnailRef = storageRef(storage, `product_thumbnails/${props.productId}`)
-      await uploadBytes(thumbnailRef, thumbnailFile.value)
-      updatedData.thumbnailURL = await getDownloadURL(thumbnailRef)
+      updatedData.thumbnailFile = thumbnailFile.value
     }
 
-    await productStore.updateProduct(props.productId, updatedData)
-    emit('save', props.productId, updatedData)
+    const result = await productStore.updateProduct(props.productId, updatedData)
+    if (result.success) {
+      emit('save', props.productId, updatedData)
+    } else {
+      throw new Error(result.error || 'Failed to update product')
+    }
   } catch (error) {
     console.error('Error saving product:', error)
+    // Handle error (e.g., show error message to user)
   } finally {
     isSaving.value = false
   }

@@ -17,7 +17,7 @@
               type="text"
               placeholder="Search Product"
               v-model="searchQuery"
-              class="w-full px-4 py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0095FF]"
+              class="w-full px-4 py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E08824]"
             />
             <span class="absolute left-3 top-2.5 text-gray-400">
               <SearchIcon class="w-5 h-5" />
@@ -25,7 +25,7 @@
           </div>
           <button
             @click="showAddProduct"
-            class="bg-[#0095FF] text-white px-4 py-2 rounded-lg hover:bg-[#0077CC] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0095FF]"
+            class="bg-[#E08824] text-white px-4 py-2 rounded-full hover:bg-[#C67820] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E08824]"
           >
             Add Product
           </button>
@@ -107,7 +107,7 @@
                             @click="showEditProduct(product.id)"
                             class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 w-full"
                           >
-                            <PencilIcon class="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
+                            <PencilSquareIcon class="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
                             Edit
                           </button>
                           <button
@@ -212,15 +212,15 @@
   import { useProductStore } from '@/store/modules/products'
   import { storeToRefs } from 'pinia'
   import { 
-    Search as SearchIcon,
-    MoreVertical as MoreVerticalIcon,
-    Pencil as PencilIcon,
-    Trash as TrashIcon,
-    ChevronLeft as ChevronLeftIcon,
-    ChevronRight as ChevronRightIcon,
-    Eye as EyeIcon,
-    ArrowUpDown as SortIcon
-  } from 'lucide-vue-next'
+    MagnifyingGlassIcon as SearchIcon,
+    EllipsisVerticalIcon as MoreVerticalIcon,
+    PencilSquareIcon,
+    TrashIcon,
+    ChevronLeftIcon,
+    ChevronRightIcon,
+    EyeIcon,
+    ArrowsUpDownIcon as SortIcon
+  } from '@heroicons/vue/24/outline'
   import AddProduct from '@/components/admin/AddProduct.vue'
   import EditProduct from '@/components/admin/EditProduct.vue'
   import ViewProduct from '@/components/admin/ViewProduct.vue'
@@ -459,3 +459,4 @@
     opacity: 0;
   }
   </style>
+  

@@ -101,12 +101,7 @@ export const useProductStore = defineStore('products', {
     async uploadImage(file, productId, isThumbnail = false) {
       try {
         const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`
-        let path
-        if (isThumbnail) {
-          path = `product_thumbnails/${fileName}`
-        } else {
-          path = `products/${productId}/${fileName}`
-        }
+        const path = `products/${fileName}`
         
         const fileRef = storageRef(storage, path)
         await uploadBytes(fileRef, file)
@@ -205,7 +200,6 @@ export const useProductStore = defineStore('products', {
         }
 
         // Update local state
-        // Instead of unshifting, we'll replace the entire products array
         this.products = [newProduct, ...this.products]
 
         return { success: true, product: newProduct }
@@ -260,18 +254,23 @@ export const useProductStore = defineStore('products', {
           updatedAt: serverTimestamp()
         }
 
-        let imageURLs = [...(currentData.imageURLs || [])]
-        let imagePaths = [...(currentData.imagePaths || [])]
-        let thumbnailURL = currentData.thumbnailURL
+        let imageURLs = []
+        let imagePaths = []
+        let thumbnailURL = updatedData.thumbnailURL
         let thumbnailPath = currentData.thumbnailPath
 
-        // Handle thumbnail update
+        // Handle thumbnail update or removal
         if (updatedData.thumbnailFile) {
           const result = await this.uploadImage(updatedData.thumbnailFile, productId, true)
           if (!result.success) throw new Error(result.error)
           
-          // Remove old thumbnail if it exists
-          if (currentData.thumbnailURL) {
+          thumbnailURL = result.url
+          thumbnailPath = result.path
+          uploadedFiles.push(result.path)
+        } else if (updatedData.thumbnailURL === null) {
+          // Thumbnail was removed
+          thumbnailURL = null
+          if (currentData.thumbnailPath) {
             try {
               const oldFileRef = storageRef(storage, currentData.thumbnailPath)
               await deleteObject(oldFileRef)
@@ -279,20 +278,40 @@ export const useProductStore = defineStore('products', {
               console.error('Error deleting old thumbnail:', error)
             }
           }
-          
-          thumbnailURL = result.url
-          thumbnailPath = result.path
-          uploadedFiles.push(result.path)
+          thumbnailPath = null
         }
 
-        // Handle new images
-        if (updatedData.imageFiles?.length > 0) {
-          for (const file of updatedData.imageFiles) {
-            const result = await this.uploadImage(file, productId)
-            if (!result.success) throw new Error(result.error)
-            imageURLs.push(result.url)
-            imagePaths.push(result.path)
-            uploadedFiles.push(result.path)
+        // Handle image updates
+        for (const image of updatedData.images) {
+          if (image.startsWith('data:')) {
+            // This is a new image, upload it
+            const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`
+            const path = `products/${fileName}`
+            const fileRef = storageRef(storage, path)
+            await uploadBytes(fileRef, await (await fetch(image)).blob())
+            const downloadURL = await getDownloadURL(fileRef)
+            imageURLs.push(downloadURL)
+            imagePaths.push(path)
+            uploadedFiles.push(path)
+          } else {
+            // This is an existing image
+            const existingImagePath = currentData.imagePaths?.find(path => path.includes(image.split('?')[0]))
+            if (existingImagePath) {
+              imageURLs.push(image)
+              imagePaths.push(existingImagePath)
+            }
+          }
+        }
+
+        // Delete removed images
+        for (const oldPath of oldImagePaths) {
+          if (!imagePaths.includes(oldPath) && oldPath !== thumbnailPath) {
+            try {
+              const oldFileRef = storageRef(storage, oldPath)
+              await deleteObject(oldFileRef)
+            } catch (error) {
+              console.error(`Error deleting old image at path ${oldPath}:`, error)
+            }
           }
         }
 
