@@ -16,11 +16,9 @@
         <div class="flex items-center h-16 px-4">
           <div class="flex items-center gap-3">
             <div class="flex-shrink-0">
-              <div class="w-8 h-8 rounded-lg bg-[#0095FF] flex items-center justify-center">
-                <span class="text-white text-lg font-bold">C</span>
-              </div>
+              <img src="@/assets/image/SALogo.png" alt="Supreme Agrivet Logo" class="w-8 h-8" />
             </div>
-            <h1 v-if="isOpenState" class="text-lg font-semibold text-gray-900">Cashier Panel</h1>
+            <h1 v-if="isOpenState" class="text-lg font-semibold text-gray-900">Supreme Agrivet</h1>
           </div>
         </div>
   
@@ -33,7 +31,7 @@
             class="flex items-center px-2 py-2 text-sm font-medium rounded-xl transition-colors"
             :class="[
               isActive(item.path)
-                ? 'bg-[#EBF5FF] text-[#0095FF]'
+                ? 'bg-[#FFF0E0] text-[#FF9934]'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             ]"
           >
@@ -46,8 +44,8 @@
   </template>
   
   <script setup>
-  import { ref, computed, onMounted, onUnmounted } from 'vue'
-  import { useRoute } from 'vue-router'
+  import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+  import { useRoute, useRouter } from 'vue-router'
   import { 
     HomeIcon, 
     ShoppingCartIcon, 
@@ -66,9 +64,12 @@
   const emit = defineEmits(['update:isOpen'])
   
   const route = useRoute()
+  const router = useRouter()
   const isHovered = ref(false)
   const isMobile = ref(false)
   const sidebarRef = ref(null)
+  const clickOutsideCount = ref(0)
+  const lastClickTime = ref(0)
   
   const isOpenState = computed(() => props.isOpen || (!isMobile.value && isHovered.value))
   
@@ -99,12 +100,65 @@
     }
   }
   
+  const handleClickOutside = (event) => {
+    if (!isMobile.value) return; // Only apply click-outside behavior on mobile
+  
+    if (isOpenState.value && !event.target.closest('[data-sidebar]') && !event.target.closest('[data-header]')) {
+      const currentTime = new Date().getTime()
+      if (currentTime - lastClickTime.value <= 300) {
+        // Double click (two clicks within 300ms)
+        clickOutsideCount.value = 0
+        emit('update:isOpen', false)
+      } else {
+        // Single click
+        clickOutsideCount.value += 1
+        if (clickOutsideCount.value >= 2) {
+          clickOutsideCount.value = 0
+          emit('update:isOpen', false)
+        }
+      }
+      lastClickTime.value = currentTime
+    } else {
+      // Reset the counter if clicked inside the sidebar or header
+      clickOutsideCount.value = 0
+    }
+  }
+  
+  const openSidebar = () => {
+    emit('update:isOpen', true)
+  }
+  
   onMounted(() => {
     updateIsMobile()
     window.addEventListener('resize', updateIsMobile)
+    document.addEventListener('mousedown', handleClickOutside)
   })
   
   onUnmounted(() => {
     window.removeEventListener('resize', updateIsMobile)
+    document.removeEventListener('mousedown', handleClickOutside)
+  })
+  
+   // Watch for route changes
+   watch(() => route.path, (newPath) => {
+    if (isMobile.value) {
+      // Close the sidebar on mobile when navigating
+      emit('update:isOpen', false)
+    }
+    
+    // Open the sidebar when navigating to specific routes
+    if (newPath === '/driver/profile') {
+      openSidebar()
+    }
+  })
+  
+  // Expose the openSidebar method
+  defineExpose({ openSidebar })
+  
+ // Global event listener for opening sidebar from header
+ router.afterEach((to) => {
+    if (to.name === 'CashierProfile') {
+      openSidebar()
+    }
   })
   </script>

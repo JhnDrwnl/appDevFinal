@@ -3,7 +3,7 @@
       <div class="container mx-auto px-4">
         <div class="flex flex-col md:flex-row justify-between items-center">
           <p class="text-sm mb-4 md:mb-0">
-            Powered By OpenCart Supreme Agrivet © {{ currentYear }}
+            Powered By Supreme Agrivet © {{ currentYear }}
           </p>
         </div>
       </div>
@@ -14,7 +14,7 @@
   import { ref, onMounted } from 'vue'
   
   const currentYear = ref(new Date().getFullYear())
-  
+
   onMounted(() => {
     // You can add any initialization logic here if needed
   })

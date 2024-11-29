@@ -39,18 +39,6 @@
             <option value="driver">Driver</option>
           </select>
         </div>
-        <div>
-          <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-          <select
-            v-model="editedEmployee.status"
-            id="status"
-            required
-            class="mt-1 block w-full px-4 py-3 bg-gray-50/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0095FF]"
-          >
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
-        </div>
       </div>
       <div class="flex justify-end space-x-3">
         <button
@@ -87,8 +75,7 @@ const editedEmployee = ref({
   id: '',
   username: '',
   email: '',
-  role: '',
-  status: ''
+  role: ''
 })
 
 onMounted(() => {

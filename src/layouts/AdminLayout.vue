@@ -28,11 +28,15 @@
       <PageHeader :key="$route.path" :title="currentPageTitle" />
       
       <main class="flex-1 px-6 py-4 lg:px-8 overflow-x-hidden">
-        <router-view v-slot="{ Component }">
-          <transition name="fade" mode="out-in">
-            <component :is="Component" />
-          </transition>
-        </router-view>
+        <div class="max-w-7xl mx-auto w-full">
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 lg:p-8">
+            <router-view v-slot="{ Component }">
+              <transition name="fade" mode="out-in">
+                <component :is="Component" />
+              </transition>
+            </router-view>
+          </div>
+        </div>
       </main>
     </div>
   

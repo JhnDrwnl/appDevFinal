@@ -5,14 +5,13 @@
           v-for="(item, index) in menuItems" 
           :key="index"
           :to="item.to"
-          class="flex items-center px-4 py-3 text-sm transition-colors"
+          class="flex items-center px-4 py-3 text-sm"
           :class="[
-            route.path === item.to
-              ? 'bg-[#FF9934] text-white'
-              : 'text-gray-700 hover:bg-gray-50 hover:text-[#FF9934]'
+            'text-gray-700 hover:bg-gray-50 transition-colors',
+            route.path === item.to ? 'bg-gray-50 font-medium' : ''
           ]"
         >
-          <component :is="item.icon" class="mr-3 h-5 w-5" />
+          <component :is="item.icon" class="mr-3 h-5 w-5" :class="route.path === item.to ? 'ml-2' : ''" />
           {{ item.name }}
         </router-link>
       </nav>
@@ -53,3 +52,5 @@
     { name: 'Newsletter', to: '/account/newsletter', icon: Mail },
   ]
   </script>
+  
+  

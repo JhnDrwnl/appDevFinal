@@ -17,11 +17,9 @@
       <div class="flex items-center h-16 px-4">
         <div class="flex items-center gap-3">
           <div class="flex-shrink-0">
-            <div class="w-8 h-8 rounded-lg bg-[#0095FF] flex items-center justify-center">
-              <span class="text-white text-lg font-bold">S</span>
-            </div>
+            <img src="@/assets/image/SALogo.png" alt="Supreme Agrivet Logo" class="w-8 h-8" />
           </div>
-          <h1 v-if="isOpenState" class="text-lg font-semibold text-gray-900">Spike Admin</h1>
+          <h1 v-if="isOpenState" class="text-lg font-semibold text-gray-900">Supreme Agrivet</h1>
         </div>
       </div>
 
@@ -31,10 +29,11 @@
           v-for="item in regularMenuItems"
           :key="item.path"
           :to="item.path"
+          @click="closeAllDropdowns"
           class="flex items-center px-2 py-2 text-sm font-medium rounded-xl transition-colors"
           :class="[
             isActive(item.path)
-              ? 'bg-[#EBF5FF] text-[#0095FF]'
+              ? 'bg-[#FFF0E0] text-[#FF9934]'
               : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
           ]"
         >
@@ -42,37 +41,32 @@
           <span v-if="isOpenState">{{ item.name }}</span>
         </router-link>
 
-        <!-- Administration dropdown -->
-        <div class="relative">
+        <!-- Dropdown menus -->
+        <div v-for="menu in dropdownMenus" :key="menu.name" class="relative">
           <button
-            @click="toggleAdminMenu"
-            class="w-full flex items-center px-2 py-2 text-sm font-medium rounded-xl transition-colors"
-            :class="[
-              isAdminMenuOpen || isActive('/admin/profile')
-                ? 'bg-[#EBF5FF] text-[#0095FF]'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            ]"
+            @click="toggleMenu(menu)"
+            class="w-full flex items-center px-2 py-2 text-sm font-medium rounded-xl transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900"
           >
-            <Cog6ToothIcon class="w-5 h-5 mr-3" aria-hidden="true" />
-            <span v-if="isOpenState">Administration</span>
+            <component :is="menu.icon" class="w-5 h-5 mr-3" aria-hidden="true" />
+            <span v-if="isOpenState">{{ menu.name }}</span>
             <ChevronDownIcon 
               v-if="isOpenState"
               class="w-5 h-5 ml-auto transition-transform duration-200"
-              :class="{ 'transform rotate-180': isAdminMenuOpen }"
+              :class="{ 'transform rotate-180': menu.isOpen }"
             />
           </button>
           <div
-            v-if="isOpenState && isAdminMenuOpen"
+            v-if="isOpenState && menu.isOpen"
             class="mt-1 space-y-1 px-2"
           >
             <router-link
-              v-for="subItem in adminSubItems"
+              v-for="subItem in menu.subItems"
               :key="subItem.path"
               :to="subItem.path"
               class="flex items-center pl-9 pr-2 py-2 text-sm font-medium rounded-xl transition-colors"
               :class="[
                 isActive(subItem.path)
-                  ? 'bg-[#EBF5FF] text-[#0095FF]'
+                  ? 'bg-[#FFF0E0] text-[#FF9934]'
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               ]"
             >
@@ -87,17 +81,28 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, inject } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { 
   HomeIcon, 
   UsersIcon, 
-  ShoppingBagIcon, 
   ShoppingCartIcon, 
   Cog6ToothIcon,
   ChevronDownIcon,
   UserGroupIcon,
   IdentificationIcon,
+  ArchiveBoxIcon,
+  TagIcon,
+  TruckIcon,
+  MapPinIcon,
+  ReceiptPercentIcon,
+  ClipboardDocumentCheckIcon,
+  ChatBubbleLeftRightIcon,
+  AdjustmentsHorizontalIcon,
+  CurrencyDollarIcon,
+  BuildingOfficeIcon,
+  DocumentTextIcon,
+  CubeIcon
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -110,7 +115,7 @@ const props = defineProps({
 const emit = defineEmits(['update:isOpen'])
 
 const route = useRoute()
-const isAdminMenuOpen = ref(false)
+const router = useRouter()
 const isHovered = ref(false)
 const isMobile = ref(false)
 const sidebarRef = ref(null)
@@ -121,22 +126,88 @@ const isOpenState = computed(() => props.isOpen || (!isMobile.value && isHovered
 
 const regularMenuItems = [
   { name: 'Dashboard', path: '/admin/dashboard', icon: HomeIcon },
-  { name: 'Users', path: '/admin/users', icon: UsersIcon },
-  { name: 'Products', path: '/admin/products', icon: ShoppingBagIcon },
-  { name: 'Orders', path: '/admin/orders', icon: ShoppingCartIcon },
+  { name: 'Price Rule', path: '/admin/price-rule', icon: CurrencyDollarIcon },
 ]
 
-const adminSubItems = [
-  { name: 'Employees', path: '/admin/employees', icon: UserGroupIcon },
-  { name: 'Profile', path: '/admin/profile', icon: IdentificationIcon },
-]
+const dropdownMenus = ref([
+  {
+    name: 'Catalog',
+    icon: ArchiveBoxIcon,
+    isOpen: false,
+    subItems: [
+      { name: 'Products', path: '/admin/catalog/products', icon: CubeIcon },
+      { name: 'Categories', path: '/admin/catalog/categories', icon: TagIcon },
+      { name: 'Suppliers', path: '/admin/catalog/suppliers', icon: BuildingOfficeIcon },
+    ]
+  },
+  {
+    name: 'Customers',
+    icon: UsersIcon,
+    isOpen: false,
+    subItems: [
+      { name: 'Customers', path: '/admin/customers', icon: UsersIcon },
+      { name: 'Addresses', path: '/admin/customers/addresses', icon: MapPinIcon },
+      { name: 'Shopping Cart', path: '/admin/customers/cart', icon: ShoppingCartIcon },
+    ]
+  },
+  {
+    name: 'Orders',
+    icon: ShoppingCartIcon,
+    isOpen: false,
+    subItems: [
+      { name: 'Invoices', path: '/admin/orders/invoices', icon: ReceiptPercentIcon },
+      { name: 'Delivery Slips', path: '/admin/orders/delivery-slips', icon: DocumentTextIcon },
+      { name: 'Statuses', path: '/admin/orders/statuses', icon: ClipboardDocumentCheckIcon },
+      { name: 'Order Messages', path: '/admin/orders/messages', icon: ChatBubbleLeftRightIcon },
+    ]
+  },
+  {
+    name: 'Shipping',
+    icon: TruckIcon,
+    isOpen: false,
+    subItems: [
+      { name: 'Carriers', path: '/admin/shipping/carriers', icon: TruckIcon },
+      { name: 'Preferences', path: '/admin/shipping/preferences', icon: AdjustmentsHorizontalIcon },
+    ]
+  },
+  {
+    name: 'Administration',
+    icon: Cog6ToothIcon,
+    isOpen: false,
+    subItems: [
+      { name: 'Employees', path: '/admin/employees', icon: UserGroupIcon },
+      { name: 'Profile', path: '/admin/profile', icon: IdentificationIcon },
+    ]
+  }
+])
 
 const isActive = (path) => {
   return route.path.startsWith(path)
 }
 
-const toggleAdminMenu = () => {
-  isAdminMenuOpen.value = !isAdminMenuOpen.value
+const selectFirstSubItem = (menu) => {
+  if (menu.subItems && menu.subItems.length > 0) {
+    router.push(menu.subItems[0].path)
+  }
+}
+
+const toggleMenu = (clickedMenu) => {
+  dropdownMenus.value.forEach(menu => {
+    if (menu === clickedMenu) {
+      menu.isOpen = !menu.isOpen
+      if (menu.isOpen) {
+        selectFirstSubItem(menu)
+      }
+    } else {
+      menu.isOpen = false
+    }
+  })
+}
+
+const closeAllDropdowns = () => {
+  dropdownMenus.value.forEach(menu => {
+    menu.isOpen = false
+  })
 }
 
 const handleMouseEnter = () => {
@@ -146,7 +217,7 @@ const handleMouseEnter = () => {
 const handleMouseLeave = () => {
   isHovered.value = false
   if (!props.isOpen) {
-    isAdminMenuOpen.value = false
+    closeAllDropdowns()
   }
 }
 
@@ -181,10 +252,21 @@ const handleClickOutside = (event) => {
   }
 }
 
+const openRelevantDropdown = (path) => {
+  dropdownMenus.value.forEach(menu => {
+    if (menu.subItems.some(item => path.startsWith(item.path))) {
+      menu.isOpen = true
+    } else {
+      menu.isOpen = false
+    }
+  })
+}
+
 onMounted(() => {
   updateIsMobile()
   window.addEventListener('resize', updateIsMobile)
   document.addEventListener('mousedown', handleClickOutside)
+  openRelevantDropdown(route.path)
 })
 
 onUnmounted(() => {
@@ -192,11 +274,10 @@ onUnmounted(() => {
   document.removeEventListener('mousedown', handleClickOutside)
 })
 
-const isAdminDropdownOpen = inject('isAdminDropdownOpen')
-
-watch(isAdminDropdownOpen, (newValue) => {
-  if (newValue) {
-    isAdminMenuOpen.value = true
+watch(() => route.path, (newPath) => {
+  if (isMobile.value) {
+    emit('update:isOpen', false)
   }
+  openRelevantDropdown(newPath)
 })
 </script>

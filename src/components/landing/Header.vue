@@ -1,25 +1,33 @@
 <!-- components/landing/Header.vue -->
 <template>
-  <header class="bg-white shadow-sm">
-    <nav class="max-w-7xl mx-auto px-8">
+  <CommonHeader v-if="isAuthenticated" />
+  <header v-else
+    ref="header" 
+    class="bg-white shadow-sm transition-all duration-300"
+    :class="{ 
+      'fixed top-0 left-0 right-0 z-50 animate-slideDown': isScrolled,
+      'relative': !isScrolled
+    }"
+  >
+    <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-24">
         <!-- Left side with logo and company name -->
-        <div class="flex items-center space-x-4">
+        <div class="flex items-center">
           <router-link to="/" class="flex items-center">
             <img 
               src="@/assets/image/SALogo.png"
               alt="Supreme Agrivet Logo" 
-              class="h-14 w-auto"
+              class="h-10 w-auto sm:h-12 md:h-14"
             />
             <div class="ml-2 flex flex-col">
-              <span class="text-xl font-bold text-gray-900 font-sans leading-tight">Supreme</span>
-              <span class="text-lg font-medium text-gray-700 font-serif -mt-1">Agrivet</span>
+              <span class="text-lg sm:text-xl font-bold text-gray-900 font-sans leading-tight">Supreme</span>
+              <span class="text-base sm:text-lg font-medium text-gray-700 font-serif -mt-1">Agrivet</span>
             </div>
           </router-link>
         </div>
 
         <!-- Centered navigation -->
-        <div class="flex-1 flex justify-center items-center space-x-10">
+        <div class="hidden md:flex flex-1 justify-center items-center space-x-6 lg:space-x-10">
           <!-- SA Dropdown (without symbol) -->
           <div class="relative group">
             <button 
@@ -95,7 +103,7 @@
         </div>
 
         <!-- Right side icons -->
-        <div class="flex items-center space-x-6">
+        <div class="flex items-center space-x-4 sm:space-x-6">
           <!-- Search -->
           <button class="text-gray-700 hover:text-[#FF9B50] focus:outline-none">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -146,7 +154,7 @@
           </div>
 
           <!-- Mobile menu button -->
-          <div class="flex items-center md:hidden">
+          <div class="flex items-center md:hidden ml-4">
             <button
               @click="toggleMobileMenu"
               class="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-[#FF9B50] hover:bg-gray-100 focus:outline-none"
@@ -177,44 +185,10 @@
 
       <!-- Mobile menu -->
       <div
-        class="md:hidden"
-        :class="{ 'block': mobileMenuOpen, 'hidden': !mobileMenuOpen }"
+        class="md:hidden fixed inset-x-0 top-24 bg-white shadow-md transition-all duration-300 overflow-hidden z-40"
+        :class="{ 'max-h-screen': mobileMenuOpen, 'max-h-0': !mobileMenuOpen }"
       >
-        <div class="pt-2 pb-3 space-y-1">
-          <!-- SA Dropdown for mobile -->
-          <div class="relative">
-            <button @click="toggleMobileDropdown" class="w-full text-left block px-3 py-2 text-base font-medium text-gray-700 hover:text-[#FF9B50] hover:bg-gray-50 rounded-md">
-              SA
-            </button>
-            <div v-if="isMobileDropdownOpen" class="mt-2 space-y-2">
-              <div class="pl-4">
-                <h3 class="text-sm font-semibold text-gray-900 mb-2">Live Poultry</h3>
-                <div class="flex flex-col space-y-2">
-                  <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Chicks</a>
-                  <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Pullets</a>
-                  <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Layers</a>
-                </div>
-              </div>
-              <div class="pl-4">
-                <h3 class="text-sm font-semibold text-gray-900 mb-2">Chicken Feed</h3>
-                <div class="flex flex-col space-y-2">
-                  <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Starter Feed</a>
-                  <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Grower Feed</a>
-                  <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Layer Feed</a>
-                </div>
-              </div>
-              <div class="pl-4">
-                <h3 class="text-sm font-semibold text-gray-900 mb-2">Poultry Health & Supplements</h3>
-                <div class="flex flex-col space-y-2">
-                  <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Vitamins</a>
-                  <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Medications</a>
-                  <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Supplements</a>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Main navigation for mobile -->
+        <div class="px-2 pt-2 pb-3 space-y-1">
           <a
             v-for="item in navItems"
             :key="item.name"
@@ -224,6 +198,38 @@
           >
             {{ item.text }}
           </a>
+          <button
+            @click="toggleMobileDropdown"
+            class="w-full text-left block px-3 py-2 text-base font-medium text-gray-700 hover:text-[#FF9B50] hover:bg-gray-50 rounded-md"
+          >
+            SA
+          </button>
+          <div v-if="isMobileDropdownOpen" class="pl-6 space-y-2">
+            <div>
+              <h3 class="text-sm font-semibold text-gray-900 mb-2">Live Poultry</h3>
+              <div class="flex flex-col space-y-2">
+                <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Chicks</a>
+                <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Pullets</a>
+                <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Layers</a>
+              </div>
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold text-gray-900 mb-2">Chicken Feed</h3>
+              <div class="flex flex-col space-y-2">
+                <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Starter Feed</a>
+                <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Grower Feed</a>
+                <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Layer Feed</a>
+              </div>
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold text-gray-900 mb-2">Poultry Health & Supplements</h3>
+              <div class="flex flex-col space-y-2">
+                <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Vitamins</a>
+                <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Medications</a>
+                <a href="#" class="text-sm text-gray-700 hover:text-[#FF9B50]">Supplements</a>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </nav>
@@ -231,9 +237,15 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ShoppingBasket } from 'lucide-vue-next'
+import { useAuthStore } from '@/store/modules/auth'
+import CommonHeader from '@/components/common/Header.vue'
+
+const authStore = useAuthStore()
+
+const isAuthenticated = computed(() => authStore.isAuthenticated)
 
 const route = useRoute()
 const router = useRouter()
@@ -243,6 +255,8 @@ const isMobileDropdownOpen = ref(false)
 const isUserDropdownOpen = ref(false)
 const activeNavItem = ref(null)
 const isDropdownClicked = ref(false)
+const header = ref(null)
+const isScrolled = ref(false)
 
 const navItems = [
   { name: 'about', to: '/about', text: 'About' },
@@ -260,6 +274,13 @@ const toggleMobileMenu = () => {
 const closeMobileMenu = () => {
   mobileMenuOpen.value = false
   isMobileDropdownOpen.value = false
+}
+
+const closeAllMenus = () => {
+  mobileMenuOpen.value = false
+  isMobileDropdownOpen.value = false
+  isDropdownOpen.value = false
+  isUserDropdownOpen.value = false
 }
 
 const showDropdown = () => {
@@ -294,10 +315,9 @@ const navigateTo = (path, name) => {
     router.push(path)
   }
   activeNavItem.value = name
-  isDropdownOpen.value = false
   isDropdownClicked.value = false
-  closeMobileMenu()
-  
+  closeAllMenus()
+
   // Emit an event to trigger scrolling in the parent component
   window.dispatchEvent(new CustomEvent('scroll-to-section', { detail: name }))
 }
@@ -308,5 +328,43 @@ watch(() => route.name, () => {
   isDropdownOpen.value = false
   isDropdownClicked.value = false
 })
+
+const handleScroll = () => {
+  const scrollPosition = window.pageYOffset
+  if (scrollPosition > 100 && !isScrolled.value) {
+    isScrolled.value = true
+  } else if (scrollPosition <= 100 && isScrolled.value) {
+    isScrolled.value = false
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
 </script>
+
+<style scoped>
+header {
+  transition: transform 0.3s ease;
+}
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-slideDown {
+  animation: slideDown 0.3s ease-in-out forwards;
+}
+.max-h-0 {
+  max-height: 0;
+}
+</style>
 

@@ -1,3 +1,4 @@
+<!-- components/landing/Breadcrumbs.vue -->
 <template>
     <nav aria-label="Breadcrumb" class="bg-[#FFF8F3] border-b border-gray-200">
       <div class="max-w-7xl mx-auto px-8 sm:px-10 lg:px-12">
@@ -24,20 +25,12 @@
                     aria-hidden="true" 
                   />
                   <router-link 
-                    v-if="crumb.path && index < breadcrumbs.length - 1"
                     :to="crumb.path"
                     class="text-gray-600 hover:text-[#FF9934] transition-colors"
                     @click.native="handleNavigation(crumb.path)"
                   >
                     {{ crumb.name }}
                   </router-link>
-                  <span 
-                    v-else
-                    class="text-[#FF9934]"
-                    :class="{ 'font-semibold': index === breadcrumbs.length - 1 }"
-                  >
-                    {{ crumb.name }}
-                  </span>
                 </div>
               </li>
             </template>
@@ -69,7 +62,7 @@
     if (pathArray[0] === 'auth') {
       crumbs.push({
         name: 'Account',
-        path: null
+        path: '/auth'
       })
   
       // Add specific auth page
@@ -83,7 +76,7 @@
         if (pageName) {
           crumbs.push({
             name: pageName,
-            path: null
+            path: `/auth/${pathArray[1]}`
           })
         }
       }
@@ -99,7 +92,7 @@
       if (pageName) {
         crumbs.push({
           name: pageName,
-          path: null
+          path: `/${pathArray[0]}`
         })
       }
     }

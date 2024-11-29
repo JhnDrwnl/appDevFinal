@@ -1,3 +1,4 @@
+<!-- components/landing/PromotionalBanner -->
 <template>
     <div class="bg-[#FF9B50] text-white py-3">
       <div class="max-w-7xl mx-auto px-8 flex justify-between items-center">
