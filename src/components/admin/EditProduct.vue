@@ -23,7 +23,7 @@
               <input
                 v-model="product.name"
                 type="text"
-                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0095FF]"
+                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9934]"
               />
             </div>
             <div>
@@ -94,7 +94,7 @@
               />
               <button
                 @click="$refs.fileInput.click()"
-                class="mt-2 px-4 py-2 text-sm text-[#0095FF] hover:text-[#0077CC]"
+                class="mt-2 px-4 py-2 text-sm text-[#FF9934] hover:text-[#E08824] rounded-full"
               >
                 Select Files
               </button>
@@ -117,7 +117,7 @@
                   type="number"
                   step="0.01"
                   min="0"
-                  class="block w-full pl-7 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0095FF]"
+                  class="block w-full pl-7 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9934]"
                 />
               </div>
             </div>
@@ -129,7 +129,7 @@
                     type="radio"
                     v-model="product.discountType"
                     value="none"
-                    class="form-radio text-[#0095FF]"
+                    class="form-radio text-[#FF9934]"
                   />
                   <span class="ml-2">No Discount</span>
                 </label>
@@ -138,7 +138,7 @@
                     type="radio"
                     v-model="product.discountType"
                     value="percentage"
-                    class="form-radio text-[#0095FF]"
+                    class="form-radio text-[#FF9934]"
                   />
                   <span class="ml-2">Percentage %</span>
                 </label>
@@ -147,7 +147,7 @@
                     type="radio"
                     v-model="product.discountType"
                     value="fixed"
-                    class="form-radio text-[#0095FF]"
+                    class="form-radio text-[#FF9934]"
                   />
                   <span class="ml-2">Fixed Price</span>
                 </label>
@@ -168,7 +168,7 @@
                   :min="0"
                   :max="product.discountType === 'percentage' ? 100 : undefined"
                   :class="[
-                    'block w-full py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0095FF]',
+                    'block w-full py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9934]',
                     product.discountType === 'fixed' ? 'pl-7' : 'px-4'
                   ]"
                 />
@@ -185,7 +185,7 @@
                   v-model.number="product.stockQuantity"
                   type="number"
                   min="0"
-                  class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0095FF]"
+                  class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9934]"
                   placeholder="Enter stock quantity"
                 />
               </div>
@@ -249,15 +249,34 @@
           <h2 class="text-lg font-medium text-gray-900 mb-4">Product Details</h2>
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700">Category</label>
-              <select
-                v-model="product.category"
-                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0095FF]"
-              >
-                <option v-for="category in availableCategories" :key="category" :value="category">
-                  {{ category }}
-                </option>
-              </select>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Categories</label>
+              <div class="bg-white border border-gray-300 rounded-lg p-4">
+                <div class="mb-3 p-2 bg-gray-50 border border-gray-200 rounded-md">
+                  <span class="text-sm text-gray-500">Selected Categories:</span>
+                  <span class="ml-2 font-medium">{{ selectedCategoryNames }}</span>
+                </div>
+                <div v-if="categoryStore.loading" class="text-center py-4">
+                  Loading categories...
+                </div>
+                <div v-else-if="categoryStore.error" class="text-center py-4 text-red-600">
+                  {{ categoryStore.error }}
+                </div>
+                <div v-else class="tree-container font-mono max-h-60 overflow-y-auto">
+                  <div v-if="categoryStore.categories.length === 0" class="text-center py-4 text-gray-500">
+                    No categories available
+                  </div>
+                  <TreeNode
+                    v-for="category in rootCategories"
+                    :key="category.id"
+                    :node="category"
+                    :level="0"
+                    :selected-ids="product.categoryIds"
+                    :disabled-id="null"
+                    :view-only="false"
+                    @select-parent="toggleCategory"
+                  />
+                </div>
+              </div>
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700">Tags</label>
@@ -281,7 +300,7 @@
                   v-model="newTag"
                   @keyup.enter="addTag"
                   type="text"
-                  class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0095FF]"
+                  class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9934]"
                   placeholder="Add a tag"
                 />
                 <button
@@ -319,7 +338,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, reactive } from 'vue'
 import { useProductStore } from '@/store/modules/products'
-import { storeToRefs } from 'pinia'
+import { useCategoryStore } from '@/store/modules/categories'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
@@ -330,6 +349,7 @@ import Paragraph from '@tiptap/extension-paragraph'
 import Text from '@tiptap/extension-text'
 import Bold from '@tiptap/extension-bold'
 import Italic from '@tiptap/extension-italic'
+import TreeNode from './TreeNode.vue'
 import { 
   Bold as BoldIcon, 
   Italic as ItalicIcon, 
@@ -350,7 +370,7 @@ const props = defineProps({
 const emit = defineEmits(['cancel', 'save'])
 
 const productStore = useProductStore()
-const { products } = storeToRefs(productStore)
+const categoryStore = useCategoryStore()
 
 const activeFormats = reactive({
   bold: false,
@@ -468,8 +488,6 @@ const toggleFormat = (item) => {
   }
 }
 
-const availableCategories = ['Books', 'Electronics', 'Fashion', 'Home & Garden']
-
 const product = ref({
   name: '',
   description: '',
@@ -478,7 +496,7 @@ const product = ref({
   discountValue: 0,
   thumbnail: '',
   images: [],
-  category: '',
+  categoryIds: [],
   stockQuantity: 0,
   tags: []
 })
@@ -513,7 +531,8 @@ onMounted(async () => {
       images: (currentProduct.imageURLs || []).map(url => ({ url, isNew: false })),
       thumbnail: currentProduct.thumbnailURL || '',
       tags: currentProduct.tags || [],
-      stockQuantity: currentProduct.stockQuantity || 0
+      stockQuantity: currentProduct.stockQuantity || 0,
+      categoryIds: currentProduct.categoryIds || []
     }
     
     if (editor.value && currentProduct.description) {
@@ -521,6 +540,7 @@ onMounted(async () => {
       updateActiveFormats()
     }
   }
+  await categoryStore.fetchCategories()
 })
 
 // Clean up editor
@@ -608,6 +628,25 @@ const removeTag = (tag) => {
   product.value.tags = product.value.tags.filter(t => t !== tag)
 }
 
+const rootCategories = computed(() => categoryStore.getRootCategories)
+
+const selectedCategoryNames = computed(() => {
+  if (product.value.categoryIds.length === 0) return 'None (Top-level category)'
+  return product.value.categoryIds
+    .map(id => categoryStore.categories.find(c => c.id === id)?.name)
+    .filter(Boolean)
+    .join(', ')
+})
+
+const toggleCategory = (categoryId) => {
+  const index = product.value.categoryIds.indexOf(categoryId)
+  if (index === -1) {
+    product.value.categoryIds.push(categoryId)
+  } else {
+    product.value.categoryIds.splice(index, 1)
+  }
+}
+
 // Save product
 const saveProduct = async () => {
   try {
@@ -630,8 +669,12 @@ const saveProduct = async () => {
 
     const result = await productStore.updateProduct(props.productId, updatedData)
     if (result.success) {
-      // Call cleanupUnusedImages after successful update
-      await productStore.cleanupUnusedImages(props.productId)
+      // Check if cleanupUnusedImages exists before calling it
+      if (typeof productStore.cleanupUnusedImages === 'function') {
+        await productStore.cleanupUnusedImages(props.productId)
+      } else {
+        console.warn('cleanupUnusedImages function is not available in the product store')
+      }
       emit('save', props.productId, updatedData)
     } else {
       throw new Error(result.error || 'Failed to update product')

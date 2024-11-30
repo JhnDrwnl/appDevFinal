@@ -17,7 +17,7 @@
               type="text"
               placeholder="Search Product"
               v-model="searchQuery"
-              class="w-full px-4 py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E08824]"
+              class="w-full px-4 py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9934]"
             />
             <span class="absolute left-3 top-2.5 text-gray-400">
               <SearchIcon class="w-5 h-5" />
@@ -25,7 +25,7 @@
           </div>
           <button
             @click="showAddProduct"
-            class="bg-[#E08824] text-white px-4 py-2 rounded-full hover:bg-[#C67820] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E08824]"
+            class="bg-[#FF9934] text-white px-4 py-2 rounded-full hover:bg-[#E88820] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FF9934]"
           >
             Add Product
           </button>
@@ -40,6 +40,10 @@
                     Products
                     <SortIcon v-if="sortColumn === 'name'" :class="{ 'transform rotate-180': sortDirection === 'desc' }" class="inline-block w-4 h-4 ml-1" />
                   </th>
+                  <th @click="sort('categories')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
+                    Categories
+                    <SortIcon v-if="sortColumn === 'categories'" :class="{ 'transform rotate-180': sortDirection === 'desc' }" class="inline-block w-4 h-4 ml-1" />
+                  </th>
                   <th @click="sort('date')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
                     Date
                     <SortIcon v-if="sortColumn === 'date'" :class="{ 'transform rotate-180': sortDirection === 'desc' }" class="inline-block w-4 h-4 ml-1" />
@@ -52,7 +56,9 @@
                     Price
                     <SortIcon v-if="sortColumn === 'price'" :class="{ 'transform rotate-180': sortDirection === 'desc' }" class="inline-block w-4 h-4 ml-1" />
                   </th>
-                  <th class="px-6 py-3 w-px"></th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
@@ -64,8 +70,12 @@
                       </div>
                       <div class="ml-4">
                         <div class="text-sm font-medium text-gray-900">{{ product.name }}</div>
-                        <div class="text-sm text-gray-500">{{ product.category }}</div>
                       </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-500">
+                      {{ product.categories.join(', ') }}
                     </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -85,40 +95,28 @@
                     ₱{{ product.price.toFixed(2) }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div class="relative">
-                      <button @click="toggleActions(product.id, $event)" class="text-gray-400 hover:text-gray-500">
-                        <MoreVerticalIcon class="h-5 w-5" />
+                    <div class="flex space-x-4">
+                      <button
+                        @click="showProductDetails(product.id)"
+                        class="text-blue-600 hover:text-blue-800 focus:outline-none"
+                        title="View"
+                      >
+                        <EyeIcon class="h-5 w-5" />
                       </button>
-                      <div v-if="activeProductId === product.id" 
-                           class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none z-50" 
-                           role="menu" 
-                           aria-orientation="vertical"
-                           :style="dropdownStyle"
-                           :data-product-id="product.id">
-                        <div class="py-1" role="none">
-                          <button
-                            @click="showProductDetails(product.id)"
-                            class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 w-full"
-                          >
-                            <EyeIcon class="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
-                            View
-                          </button>
-                          <button
-                            @click="showEditProduct(product.id)"
-                            class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 w-full"
-                          >
-                            <PencilSquareIcon class="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
-                            Edit
-                          </button>
-                          <button
-                            @click="confirmDeleteProduct(product.id)"
-                            class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 w-full"
-                          >
-                            <TrashIcon class="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
-                            Delete
-                          </button>
-                        </div>
-                      </div>
+                      <button
+                        @click="showEditProduct(product.id)"
+                        class="text-green-600 hover:text-green-800 focus:outline-none"
+                        title="Edit"
+                      >
+                        <PencilSquareIcon class="h-5 w-5" />
+                      </button>
+                      <button
+                        @click="confirmDeleteProduct(product.id)"
+                        class="text-red-600 hover:text-red-800 focus:outline-none"
+                        title="Delete"
+                      >
+                        <TrashIcon class="h-5 w-5" />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -190,7 +188,7 @@
             <div class="items-center px-4 py-3">
               <button
                 @click="deleteProduct"
-                class="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 mb-2"
+                class="px-4 py-2 bg-[#FF9934] text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-[#E88820] focus:outline-none focus:ring-2 focus:ring-[#FF9934] mb-2"
               >
                 Delete
               </button>
@@ -208,12 +206,11 @@
   </template>
   
   <script setup>
-  import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+  import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
   import { useProductStore } from '@/store/modules/products'
   import { storeToRefs } from 'pinia'
   import { 
     MagnifyingGlassIcon as SearchIcon,
-    EllipsisVerticalIcon as MoreVerticalIcon,
     PencilSquareIcon,
     TrashIcon,
     ChevronLeftIcon,
@@ -233,14 +230,12 @@
   const searchQuery = ref('')
   const rowsPerPage = ref(10)
   const currentPage = ref(1)
-  const activeProductId = ref(null)
   const editProductId = ref(null)
   const selectedProduct = ref(null)
   const showDeleteModal = ref(false)
   const productToDeleteId = ref(null)
   const sortColumn = ref('name')
   const sortDirection = ref('asc')
-  const dropdownStyle = ref({})
   
   // Alert related refs
   const showAlert = ref(false)
@@ -251,7 +246,7 @@
   const filteredProducts = computed(() => {
     return products.value.filter(product =>
       product.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchQuery.value.toLowerCase())
+      product.categories.some(category => category.toLowerCase().includes(searchQuery.value.toLowerCase()))
     )
   })
   
@@ -261,6 +256,8 @@
       
       if (sortColumn.value === 'stock') {
         comparison = (a.stockQuantity || 0) - (b.stockQuantity || 0)
+      } else if (sortColumn.value === 'categories') {
+        comparison = a.categories.join(', ').localeCompare(b.categories.join(', '))
       } else {
         if (a[sortColumn.value] < b[sortColumn.value]) comparison = -1
         if (a[sortColumn.value] > b[sortColumn.value]) comparison = 1
@@ -280,11 +277,9 @@
   
   onMounted(async () => {
     await productStore.fetchProducts()
-    document.addEventListener('click', handleClickOutside)
   })
   
   onUnmounted(() => {
-    document.removeEventListener('click', handleClickOutside)
     clearAlertTimer()
   })
   
@@ -331,8 +326,6 @@
   
   const handleProductSaved = async (result) => {
     if (result.success && result.product) {
-      // Instead of manually adding the product to the list,
-      // we'll re-fetch all products to ensure consistency
       await productStore.fetchProducts()
       currentPage.value = 1
       showAlertMessage('Product added successfully')
@@ -351,27 +344,6 @@
       showAlertMessage('Failed to update product. Please try again.', 'error')
     }
     showList()
-  }
-  
-  const toggleActions = (productId, event) => {
-    if (activeProductId.value === productId) {
-      activeProductId.value = null
-      dropdownStyle.value = {}
-    } else {
-      activeProductId.value = productId
-      nextTick(() => {
-        const button = event.target.closest('button')
-        const buttonRect = button.getBoundingClientRect()
-        const tableRect = button.closest('.overflow-x-auto').getBoundingClientRect()
-        
-        dropdownStyle.value = {
-          position: 'fixed',
-          top: `${buttonRect.bottom}px`,
-          right: `${window.innerWidth - tableRect.right}px`,
-          zIndex: '50',
-        }
-      })
-    }
   }
   
   const previousPage = () => {
@@ -422,16 +394,6 @@
       sortDirection.value = 'asc'
     }
   }
-  
-  const handleClickOutside = (event) => {
-    if (activeProductId.value) {
-      const dropdown = document.querySelector(`[data-product-id="${activeProductId.value}"]`)
-      if (dropdown && !dropdown.contains(event.target) && !event.target.closest('button')) {
-        activeProductId.value = null
-        dropdownStyle.value = {}
-      }
-    }
-  }
   </script>
   
   <style scoped>
@@ -443,10 +405,6 @@
   table {
     position: relative;
     z-index: 1;
-  }
-  
-  .origin-top-right {
-    transform-origin: top right;
   }
   
   .fade-enter-active,

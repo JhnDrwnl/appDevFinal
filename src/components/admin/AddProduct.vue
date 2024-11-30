@@ -2,15 +2,15 @@
 <template>
   <div>
     <div>
-    <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-semibold text-gray-900">Add Product</h1>
-      <button
-        @click="$emit('cancel')"
-        class="text-sm text-[#FF9934] hover:text-[#E08824] rounded-full px-4 py-2 transition-colors duration-200"
-      >
-        Back to Products
-      </button>
-    </div>
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-semibold text-gray-900">Add Product</h1>
+        <button
+          @click="$emit('cancel')"
+          class="text-sm text-[#FF9934] hover:text-[#E08824] rounded-full px-4 py-2 transition-colors duration-200"
+        >
+          Back to Products
+        </button>
+      </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -25,7 +25,7 @@
               <input
                 v-model="product.name"
                 type="text"
-                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0095FF]"
+                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9934]"
                 placeholder="Product name"
               />
             </div>
@@ -115,7 +115,7 @@
                   type="number"
                   step="0.01"
                   min="0"
-                  class="block w-full pl-7 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0095FF]"
+                  class="block w-full pl-7 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9934]"
                   placeholder="0.00"
                 />
               </div>
@@ -128,7 +128,7 @@
                     type="radio"
                     v-model="product.discountType"
                     value="none"
-                    class="form-radio text-[#0095FF]"
+                    class="form-radio text-[#FF9934]"
                   />
                   <span class="ml-2">No Discount</span>
                 </label>
@@ -137,7 +137,7 @@
                     type="radio"
                     v-model="product.discountType"
                     value="percentage"
-                    class="form-radio text-[#0095FF]"
+                    class="form-radio text-[#FF9934]"
                   />
                   <span class="ml-2">Percentage %</span>
                 </label>
@@ -146,7 +146,7 @@
                     type="radio"
                     v-model="product.discountType"
                     value="fixed"
-                    class="form-radio text-[#0095FF]"
+                    class="form-radio text-[#FF9934]"
                   />
                   <span class="ml-2">Fixed Price</span>
                 </label>
@@ -166,7 +166,7 @@
                   :step="product.discountType === 'percentage' ? '1' : '0.01'"
                   :min="0"
                   :max="product.discountType === 'percentage' ? 100 : undefined"
-                  class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0095FF]"
+                  class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9934]"
                   :class="{ 'pl-7': product.discountType === 'fixed' }"
                 />
                 <span v-if="product.discountType === 'percentage'" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500">
@@ -182,7 +182,7 @@
                   v-model="product.stockQuantity"
                   type="number"
                   min="0"
-                  class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0095FF]"
+                  class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9934]"
                   placeholder="Enter stock quantity"
                 />
               </div>
@@ -245,16 +245,34 @@
           <h2 class="text-lg font-medium text-gray-900 mb-4">Product Details</h2>
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700">Categories (Optional)</label>
-              <select
-                v-model="product.category"
-                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0095FF]"
-              >
-                <option value="">Select a category (optional)</option>
-                <option v-for="category in categories" :key="category" :value="category">
-                  {{ category }}
-                </option>
-              </select>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Categories</label>
+              <div class="bg-white border border-gray-300 rounded-lg p-4">
+                <div class="mb-3 p-2 bg-gray-50 border border-gray-200 rounded-md">
+                  <span class="text-sm text-gray-500">Selected Categories:</span>
+                  <span class="ml-2 font-medium">{{ selectedCategoryNames }}</span>
+                </div>
+                <div v-if="categoryStore.loading" class="text-center py-4">
+                  Loading categories...
+                </div>
+                <div v-else-if="categoryStore.error" class="text-center py-4 text-red-600">
+                  {{ categoryStore.error }}
+                </div>
+                <div v-else class="tree-container font-mono max-h-60 overflow-y-auto">
+                  <div v-if="categoryStore.categories.length === 0" class="text-center py-4 text-gray-500">
+                    No categories available
+                  </div>
+                  <TreeNode
+                    v-for="category in rootCategories"
+                    :key="category.id"
+                    :node="category"
+                    :level="0"
+                    :selected-ids="product.categoryIds"
+                    :disabled-id="null"
+                    :view-only="false"
+                    @select-parent="toggleCategory"
+                  />
+                </div>
+              </div>
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700">Tags</label>
@@ -262,7 +280,7 @@
                 v-model="newTag"
                 @keyup.enter="addTag"
                 type="text"
-                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0095FF]"
+                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9934]"
                 placeholder="Add tags"
               />
               <div class="mt-2 flex flex-wrap gap-2">
@@ -288,20 +306,20 @@
 
     <!-- Action Buttons -->
     <div class="mt-6 flex justify-end space-x-3">
-    <button
-      @click="$emit('cancel')"
-      class="px-4 py-2 border border-gray-300 rounded-full text-gray-700 hover:bg-gray-50 transition-colors duration-200"
-    >
-      Cancel
-    </button>
-    <button
-      @click="saveProduct"
-      :disabled="isLoading"
-      class="px-4 py-2 bg-[#E08824] text-white rounded-full hover:bg-[#C67820] disabled:opacity-50 transition-colors duration-200"
-    >
-      {{ isLoading ? 'Saving...' : 'Save Changes' }}
-    </button>
-  </div>
+      <button
+        @click="$emit('cancel')"
+        class="px-4 py-2 border border-gray-300 rounded-full text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+      >
+        Cancel
+      </button>
+      <button
+        @click="saveProduct"
+        :disabled="isLoading"
+        class="px-4 py-2 bg-[#FF9934] text-white rounded-full hover:bg-[#E08824] disabled:opacity-50 transition-colors duration-200"
+      >
+        {{ isLoading ? 'Saving...' : 'Save Changes' }}
+      </button>
+    </div>
     
     <!-- Error message display -->
     <p v-if="error" class="mt-4 text-red-500">{{ error }}</p>
@@ -311,6 +329,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, reactive } from 'vue'
 import { useProductStore } from '@/store/modules/products'
+import { useCategoryStore } from '@/store/modules/categories'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
@@ -318,6 +337,7 @@ import BulletList from '@tiptap/extension-bullet-list'
 import ListItem from '@tiptap/extension-list-item'
 import Bold from '@tiptap/extension-bold'
 import Italic from '@tiptap/extension-italic'
+import TreeNode from './TreeNode.vue'
 import { 
   Bold as BoldIcon, 
   Italic as ItalicIcon, 
@@ -331,8 +351,7 @@ import {
 const emit = defineEmits(['cancel', 'saved'])
 
 const productStore = useProductStore()
-
-const categories = ['Books', 'Electronics', 'Fashion', 'Home & Garden']
+const categoryStore = useCategoryStore()
 
 const activeFormats = reactive({
   bold: false,
@@ -411,12 +430,12 @@ const product = ref({
   name: '',
   description: '',
   price: '',
-  category: '',
   tags: [],
   discountType: 'none',
   discountValue: 0,
   stockQuantity: '', 
   date: new Date().toISOString().split('T')[0],
+  categoryIds: []
 })
 
 const newTag = ref('')
@@ -554,11 +573,31 @@ const removeThumbnail = () => {
   thumbnailPreview.value = null
 }
 
-onMounted(() => {
+const rootCategories = computed(() => categoryStore.getRootCategories)
+
+const selectedCategoryNames = computed(() => {
+  if (product.value.categoryIds.length === 0) return 'None (Top-level category)'
+  return product.value.categoryIds
+    .map(id => categoryStore.categories.find(c => c.id === id)?.name)
+    .filter(Boolean)
+    .join(', ')
+})
+
+const toggleCategory = (categoryId) => {
+  const index = product.value.categoryIds.indexOf(categoryId)
+  if (index === -1) {
+    product.value.categoryIds.push(categoryId)
+  } else {
+    product.value.categoryIds.splice(index, 1)
+  }
+}
+
+onMounted(async () => {
   if (product.value.description && editor.value) {
     editor.value.commands.setContent(product.value.description)
     updateActiveFormats()
   }
+  await categoryStore.fetchCategories()
 })
 
 onBeforeUnmount(() => {
@@ -570,7 +609,6 @@ const saveProduct = async () => {
   error.value = null
 
   try {
-    // Validate required fields
     if (!product.value.name?.trim()) {
       throw new Error('Product name is required')
     }
@@ -580,6 +618,9 @@ const saveProduct = async () => {
     if (!thumbnailFile.value) {
       throw new Error('Thumbnail image is required')
     }
+    if (product.value.categoryIds.length === 0) {
+      throw new Error('At least one category is required')
+    }
 
     const productData = {
       ...product.value,
@@ -588,7 +629,8 @@ const saveProduct = async () => {
       thumbnailFile: thumbnailFile.value,
       imageFiles: imageFiles.value,
       stockQuantity: parseInt(product.value.stockQuantity) || 0,
-      discountValue: parseFloat(product.value.discountValue) || 0
+      discountValue: parseFloat(product.value.discountValue) || 0,
+      categoryIds: product.value.categoryIds.length > 0 ? product.value.categoryIds : ['None']
     }
 
     const result = await productStore.addProduct(productData)
@@ -672,5 +714,9 @@ const saveProduct = async () => {
 
 .prose ul > li::marker {
   color: #374151;
+}
+
+.tree-container {
+  user-select: none;
 }
 </style>
