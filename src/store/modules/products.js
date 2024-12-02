@@ -1,5 +1,4 @@
 // store/modules/products.js
-// store/modules/products.js
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { db, storage } from '@/services/firebase'

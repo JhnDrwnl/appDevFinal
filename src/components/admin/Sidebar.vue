@@ -100,7 +100,6 @@ import {
   ChatBubbleLeftRightIcon,
   AdjustmentsHorizontalIcon,
   CurrencyDollarIcon,
-  BuildingOfficeIcon,
   DocumentTextIcon,
   CubeIcon
 } from '@heroicons/vue/24/outline'
@@ -126,10 +125,19 @@ const isOpenState = computed(() => props.isOpen || (!isMobile.value && isHovered
 
 const regularMenuItems = [
   { name: 'Dashboard', path: '/admin/dashboard', icon: HomeIcon },
-  { name: 'Price Rule', path: '/admin/price-rule', icon: CurrencyDollarIcon },
 ]
 
 const dropdownMenus = ref([
+  {
+    name: 'Price Rules',
+    icon: CurrencyDollarIcon,
+    isOpen: false,
+    subItems: [
+      { name: 'Price Rules', path: '/admin/price-rules/price-rules', icon: CurrencyDollarIcon},
+      { name: 'Product Price Rules', path: '/admin/price-rules/product-price-rules', icon: CubeIcon },
+      { name: 'Category Price Rules', path: '/admin/price-rules/categories-price-rules', icon: TagIcon },
+    ]
+  },
   {
     name: 'Catalog',
     icon: ArchiveBoxIcon,
@@ -137,7 +145,6 @@ const dropdownMenus = ref([
     subItems: [
       { name: 'Products', path: '/admin/catalog/products', icon: CubeIcon },
       { name: 'Categories', path: '/admin/catalog/categories', icon: TagIcon },
-      { name: 'Suppliers', path: '/admin/catalog/suppliers', icon: BuildingOfficeIcon },
     ]
   },
   {
@@ -145,7 +152,7 @@ const dropdownMenus = ref([
     icon: UsersIcon,
     isOpen: false,
     subItems: [
-      { name: 'Customers', path: '/admin/customers', icon: UsersIcon },
+      { name: 'Customers', path: '/admin/customers/customers', icon: UsersIcon },
       { name: 'Addresses', path: '/admin/customers/addresses', icon: MapPinIcon },
       { name: 'Shopping Cart', path: '/admin/customers/cart', icon: ShoppingCartIcon },
     ]
@@ -281,3 +288,4 @@ watch(() => route.path, (newPath) => {
   openRelevantDropdown(newPath)
 })
 </script>
+

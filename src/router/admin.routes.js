@@ -6,6 +6,9 @@ import Employees from '@/views/admin/Employees.vue'
 import ProductList from '@/views/admin/ProductList.vue'
 import CategoryList from '@/views/admin/CategoryList.vue'
 import PriceRuleList from '@/views/admin/PriceRuleList.vue'
+import CustomerManagement from '@/views/admin/CustomerManagement.vue'
+import ProductPriceRuleList from '@/views/admin/ProductPriceRuleList.vue'
+import CategoryPriceRuleList from '@/views/admin/CategoryPriceRuleList.vue'
 
 export default [
   {
@@ -49,9 +52,36 @@ export default [
         ]
       },
       {
-        path: 'price-rule',
+        path: 'customers',
+        name: 'AdminCustomers',
+        children: [
+          {
+            path: 'customers',
+            name: 'AdminCustomers',
+            component: CustomerManagement
+          }
+        ]
+      },
+      {
+        path: 'price-rules',
         name: 'AdminPriceRule',
-        component: PriceRuleList
+        children: [
+          {
+            path: 'price-rules',
+            name: 'AdminPriceRule',
+            component: PriceRuleList
+          },
+          {
+            path: 'product-price-rules',
+            name: 'AdminProductPriceRule',
+            component: ProductPriceRuleList
+          },
+          {
+            path: 'categories-price-rules',
+            name: 'AdminCategoryPriceRule',
+            component: CategoryPriceRuleList
+          },
+        ]
       },
     ]
   }

@@ -1,4 +1,4 @@
-<!-- views/admin/CategoryList.vue -->
+<!-- views/admin/CategoryPriceRuleList.vue -->
 <template>
   <div class="w-full">
     <Alert 
@@ -15,7 +15,7 @@
         <div class="relative flex-1 max-w-md">
           <input
             type="text"
-            placeholder="Search Category"
+            placeholder="Search Category Price Rules"
             v-model="searchQuery"
             class="w-full px-4 py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9934]"
           />
@@ -24,10 +24,10 @@
           </span>
         </div>
         <button
-          @click="showAddCategory"
+          @click="showAddCategoryPriceRule"
           class="bg-[#FF9934] text-white px-4 py-2 rounded-full hover:bg-[#E88820] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FF9934]"
         >
-          Add Category
+          Add Category Price Rule
         </button>
       </div>
 
@@ -36,22 +36,14 @@
           <table class="w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
               <tr>
-                <th @click="sort('name')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
-                  Category Name
-                  <ArrowsUpDownIcon v-if="sortColumn === 'name'" :class="{ 'transform rotate-180': sortDirection === 'desc' }" class="inline-block w-4 h-4 ml-1" />
-                </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Parent Category
-                </th>
-                <th @click="sort('productCount')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
-                  Products Count
-                  <ArrowsUpDownIcon v-if="sortColumn === 'productCount'" :class="{ 'transform rotate-180': sortDirection === 'desc' }" class="inline-block w-4 h-4 ml-1" />
+                  Category Name
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Price Rule
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Price Rule Value
+                  Value
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
@@ -59,32 +51,31 @@
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="category in paginatedCategories" :key="category.id">
+              <tr v-for="rule in paginatedCategoryPriceRules" :key="rule.id">
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm font-medium text-gray-900">{{ category.name }}</div>
+                  <div class="flex items-center">
+                    <div class="text-sm font-medium text-gray-900">{{ rule.categoryName }}</div>
+                    <span :class="getStatusClass(rule)" class="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
+                      {{ getStatus(rule) }}
+                    </span>
+                  </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ getCategoryParentNames(category) }}
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-500">{{ rule.priceRuleName }}</div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ category.productCount || 0 }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ category.priceRule ? category.priceRule.priceRuleName : 'N/A' }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ formatPriceRuleValue(category.priceRule) }}
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-500">{{ formatPriceRuleValue(rule) }}</div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div class="flex items-center space-x-2">
                     <button
-                      @click="editCategory(category.id)"
+                      @click="editCategoryPriceRule(rule)"
                       class="text-green-600 hover:text-green-800 focus:outline-none"
                     >
                       <PencilSquareIcon class="h-5 w-5" />
                     </button>
                     <button
-                      @click="confirmDeleteCategory(category.id)"
+                      @click="confirmDeleteCategoryPriceRule(rule)"
                       class="text-red-600 hover:text-red-800 focus:outline-none"
                     >
                       <TrashIcon class="h-5 w-5" />
@@ -128,18 +119,17 @@
       </div>
     </div>
 
-    <AddCategory 
-      v-else-if="currentView === 'add'" 
-      @cancel="showList" 
-      @save="handleSaveCategory" 
-      @created="handleCategoryCreated"
+    <AddCategoryPriceRule
+      v-else-if="currentView === 'add'"
+      @cancel="showList"
+      @save="handleSaveCategoryPriceRule"
     />
 
-    <EditCategory 
-      v-else-if="currentView === 'edit'" 
-      :category-id="selectedCategory.id" 
-      @cancel="showList" 
-      @save="handleUpdateCategory" 
+    <EditCategoryPriceRule
+      v-else-if="currentView === 'edit'"
+      :categoryPriceRule="selectedCategoryPriceRule"
+      @cancel="showList"
+      @save="handleUpdateCategoryPriceRule"
     />
 
     <!-- Delete Confirmation Modal -->
@@ -149,12 +139,12 @@
           <h3 class="text-lg leading-6 font-medium text-gray-900">Confirm Deletion</h3>
           <div class="mt-2 px-7 py-3">
             <p class="text-sm text-gray-500">
-              Are you sure you want to delete this category? This action cannot be undone.
+              Are you sure you want to delete this category price rule? This action cannot be undone.
             </p>
           </div>
           <div class="items-center px-4 py-3">
             <button
-              @click="deleteCategory"
+              @click="deleteCategoryPriceRule"
               class="px-4 py-2 bg-[#FF9934] text-white text-base font-medium rounded-full w-full shadow-sm hover:bg-[#E88820] focus:outline-none focus:ring-2 focus:ring-[#FF9934] mb-2"
             >
               Delete
@@ -174,137 +164,125 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { useCategoryPriceRuleStore } from '@/store/modules/categoryPriceRules'
+import { usePriceRuleStore } from '@/store/modules/priceRules'
+import AddCategoryPriceRule from '@/components/admin/AddCategoryPriceRule.vue'
+import EditCategoryPriceRule from '@/components/admin/EditCategoryPriceRule.vue'
+import Alert from '@/components/common/Alert.vue'
 import { 
   MagnifyingGlassIcon, 
-  ArrowsUpDownIcon, 
   PencilSquareIcon, 
   TrashIcon,
   ChevronLeftIcon,
   ChevronRightIcon
 } from '@heroicons/vue/24/outline'
-import AddCategory from '@/components/admin/AddCategory.vue'
-import EditCategory from '@/components/admin/EditCategory.vue'
-import Alert from '@/components/common/Alert.vue'
-import { useCategoryStore } from '@/store/modules/categories'
 
-const categoryStore = useCategoryStore()
+const categoryPriceRuleStore = useCategoryPriceRuleStore()
+const priceRuleStore = usePriceRuleStore()
 const currentView = ref('list')
 const searchQuery = ref('')
-const selectedCategory = ref(null)
+const selectedCategoryPriceRule = ref(null)
 const showAlert = ref(false)
 const alertType = ref('')
 const alertMessage = ref('')
 const showDeleteModal = ref(false)
-const categoryToDelete = ref(null)
+const categoryPriceRuleToDelete = ref(null)
 
-const sortColumn = ref('name')
-const sortDirection = ref('asc')
 const currentPage = ref(1)
 const rowsPerPage = ref(10)
 
 onMounted(async () => {
-  await categoryStore.fetchCategories()
+  await categoryPriceRuleStore.fetchCategoryPriceRules()
+  await priceRuleStore.fetchPriceRules()
 })
 
-const categories = computed(() => categoryStore.categories)
+const categoryPriceRules = computed(() => categoryPriceRuleStore.categoryPriceRules)
 
-const filteredCategories = computed(() => {
-  return categories.value.filter(category =>
-    category.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+const filteredCategoryPriceRules = computed(() => {
+  return categoryPriceRules.value.filter(rule =>
+    rule.categoryName.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+    rule.priceRuleName.toLowerCase().includes(searchQuery.value.toLowerCase())
   )
 })
 
-const sortedCategories = computed(() => {
-  return [...filteredCategories.value].sort((a, b) => {
-    let modifier = sortDirection.value === 'asc' ? 1 : -1
-    if (a[sortColumn.value] < b[sortColumn.value]) return -1 * modifier
-    if (a[sortColumn.value] > b[sortColumn.value]) return 1 * modifier
-    return 0
-  })
-})
+const totalPages = computed(() => Math.ceil(filteredCategoryPriceRules.value.length / rowsPerPage.value))
 
-const totalPages = computed(() => Math.ceil(sortedCategories.value.length / rowsPerPage.value))
-
-const paginatedCategories = computed(() => {
+const paginatedCategoryPriceRules = computed(() => {
   const start = (currentPage.value - 1) * rowsPerPage.value
   const end = start + rowsPerPage.value
-  return sortedCategories.value.slice(start, end)
+  return filteredCategoryPriceRules.value.slice(start, end)
 })
 
-const showAddCategory = () => {
+const showAddCategoryPriceRule = () => {
   currentView.value = 'add'
-  categoryStore.clearError()
+  categoryPriceRuleStore.clearError()
 }
 
 const showList = () => {
   currentView.value = 'list'
-  selectedCategory.value = null
-  categoryStore.clearError()
+  selectedCategoryPriceRule.value = null
+  categoryPriceRuleStore.clearError()
 }
 
-const editCategory = (categoryId) => {
-  selectedCategory.value = categoryStore.getCategoryById(categoryId)
+const editCategoryPriceRule = (rule) => {
+  selectedCategoryPriceRule.value = { ...rule }
   currentView.value = 'edit'
-  categoryStore.clearError()
+  categoryPriceRuleStore.clearError()
 }
 
-const confirmDeleteCategory = (categoryId) => {
-  categoryToDelete.value = categoryId
+const confirmDeleteCategoryPriceRule = (rule) => {
+  categoryPriceRuleToDelete.value = { id: rule.id, categoryId: rule.categoryId }
   showDeleteModal.value = true
 }
 
-const deleteCategory = async () => {
-  if (categoryToDelete.value) {
-    const result = await categoryStore.deleteCategory(categoryToDelete.value)
+const deleteCategoryPriceRule = async () => {
+  if (categoryPriceRuleToDelete.value && categoryPriceRuleToDelete.value.id && categoryPriceRuleToDelete.value.categoryId) {
+    const result = await categoryPriceRuleStore.deleteCategoryPriceRule(
+      categoryPriceRuleToDelete.value.id,
+      categoryPriceRuleToDelete.value.categoryId
+    )
     if (result.success) {
-      showAlertWithTimeout('success', 'Category deleted successfully')
-      await categoryStore.fetchCategories()
+      showAlertWithTimeout('success', 'Category price rule deleted successfully')
     } else {
-      showAlertWithTimeout('error', `Error deleting category: ${result.error}`)
+      showAlertWithTimeout('error', `Error deleting category price rule: ${result.error}`)
     }
     showDeleteModal.value = false
-    categoryToDelete.value = null
+    categoryPriceRuleToDelete.value = null
+  } else {
+    showAlertWithTimeout('error', 'Invalid category price rule data for deletion')
   }
 }
 
 const cancelDelete = () => {
   showDeleteModal.value = false
-  categoryToDelete.value = null
+  categoryPriceRuleToDelete.value = null
 }
 
-const handleSaveCategory = async (newCategory) => {
-  const result = await categoryStore.addCategory(newCategory)
-  if (result.success) {
-    showAlertWithTimeout('success', 'Category added successfully')
-    await categoryStore.fetchCategories()
-    showList()
-  } else {
-    showAlertWithTimeout('error', `Error adding category: ${result.error}`)
+const handleSaveCategoryPriceRule = async (newRule) => {
+  try {
+    const result = await categoryPriceRuleStore.addCategoryPriceRule(newRule)
+    if (result.success) {
+      showAlertWithTimeout('success', 'Category price rule added successfully')
+      showList()
+    } else {
+      throw new Error(result.error)
+    }
+  } catch (error) {
+    showAlertWithTimeout('error', `Error adding category price rule: ${error.message}`)
   }
 }
 
-const handleCategoryCreated = (newCategory) => {
-  showAlertWithTimeout('success', `Category "${newCategory.name}" added successfully`)
-  showList()
-}
-
-const handleUpdateCategory = async (updatedCategory) => {
-  const result = await categoryStore.updateCategory(updatedCategory.id, updatedCategory)
-  if (result.success) {
-    showAlertWithTimeout('success', 'Category updated successfully')
-    await categoryStore.fetchCategories()
-    showList()
-  } else {
-    showAlertWithTimeout('error', `Error updating category: ${result.error}`)
-  }
-}
-
-const sort = (column) => {
-  if (sortColumn.value === column) {
-    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
-  } else {
-    sortColumn.value = column
-    sortDirection.value = 'asc'
+const handleUpdateCategoryPriceRule = async (updatedRule) => {
+  try {
+    const result = await categoryPriceRuleStore.updateCategoryPriceRule(updatedRule.id, updatedRule)
+    if (result.success) {
+      showAlertWithTimeout('success', 'Category price rule updated successfully')
+      showList()
+    } else {
+      throw new Error(result.error)
+    }
+  } catch (error) {
+    showAlertWithTimeout('error', `Error updating category price rule: ${error.message}`)
   }
 }
 
@@ -328,37 +306,57 @@ watch(rowsPerPage, () => {
   currentPage.value = 1
 })
 
-const hideAlert = () => {
-  showAlert.value = false
-}
-
 const showAlertWithTimeout = (type, message) => {
   showAlert.value = true
   alertType.value = type
   alertMessage.value = message
-  setTimeout(hideAlert, 3000)
+  setTimeout(() => {
+    showAlert.value = false
+  }, 3000)
 }
 
-const getCategoryParentNames = (category) => {
-  if (!category.parentIds || category.parentIds.length === 0) return 'Top-level Category';
-  
-  const parentNames = category.parentIds
-    .map(parentId => {
-      const parentCategory = categories.value.find(c => c.id === parentId);
-      return parentCategory ? parentCategory.name : 'Unknown';
-    })
-    .filter(Boolean); 
-  
-  return parentNames.length > 0 ? parentNames.join(', ') : 'Unknown';
-}
+const getStatus = (rule) => {
+  const now = new Date()
+  const priceRule = priceRuleStore.getPriceRuleById(rule.priceRuleId)
+  if (!priceRule) return 'Unknown'
 
-const formatPriceRuleValue = (priceRule) => {
-  if (!priceRule || !priceRule.priceRuleValue) return 'N/A'
-  
-  if (priceRule.priceRuleType === 'percentage') {
-    return `${priceRule.priceRuleValue}%`
+  if (priceRule.startDate > now) {
+    return 'Scheduled'
+  } else if (priceRule.endDate && priceRule.endDate < now) {
+    return 'Ended'
+  } else if (priceRule.endDate && priceRule.endDate <= new Date(now.getTime() + 24 * 60 * 60 * 1000)) {
+    return 'Ending Soon'
   } else {
-    return `₱${parseFloat(priceRule.priceRuleValue).toFixed(2)}`
+    return 'Active'
+  }
+}
+
+const getStatusClass = (rule) => {
+  const status = getStatus(rule)
+  switch (status) {
+    case 'Scheduled':
+      return 'bg-blue-100 text-blue-800'
+    case 'Ended':
+      return 'bg-gray-100 text-gray-800'
+    case 'Ending Soon':
+      return 'bg-yellow-100 text-yellow-800'
+    case 'Active':
+      return 'bg-green-100 text-green-800'
+    default:
+      return 'bg-gray-100 text-gray-800'
+  }
+}
+
+const formatPriceRuleValue = (rule) => {
+  if (!rule.priceRuleValue) return 'N/A'
+
+  const priceRule = priceRuleStore.getPriceRuleById(rule.priceRuleId)
+  if (!priceRule) return 'N/A'
+
+  if (priceRule.type === 'percentage') {
+    return `${rule.priceRuleValue}%`
+  } else {
+    return `₱${parseFloat(rule.priceRuleValue).toFixed(2)}`
   }
 }
 </script>

@@ -1,4 +1,5 @@
 // store/modules/auth.js
+// store/modules/auth.js
 import { defineStore } from 'pinia'
 import { 
   auth,
@@ -21,10 +22,9 @@ import {
   verifyBeforeUpdateEmail,
   updateProfile
 } from '@/services/firebase'
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db, storage } from '@/services/firebase'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
-
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -104,12 +104,12 @@ export const useAuthStore = defineStore('auth', {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password)
         const user = userCredential.user
         
-        // Create user document in Firestore without emailVerified field
+        // Create user document in Firestore with createdAt field
         await setDoc(doc(db, 'users', user.uid), {
           email: user.email,
           username: username || `user${user.uid.substring(0, 8)}`,
           role: 'user',
-          createdAt: new Date()
+          createdAt: serverTimestamp()
         })
         
         // Send email verification

@@ -1,4 +1,4 @@
-<!-- views/admin/PriceRuleList.vue -->
+<!-- views/admin/ProductPriceRuleList.vue -->
 <template>
     <div class="w-full">
       <Alert 
@@ -15,7 +15,7 @@
           <div class="relative flex-1 max-w-md">
             <input
               type="text"
-              placeholder="Search Price Rules"
+              placeholder="Search Product Price Rules"
               v-model="searchQuery"
               class="w-full px-4 py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9934]"
             />
@@ -24,10 +24,10 @@
             </span>
           </div>
           <button
-            @click="showAddPriceRule"
+            @click="showAddProductPriceRule"
             class="bg-[#FF9934] text-white px-4 py-2 rounded-full hover:bg-[#E88820] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FF9934]"
           >
-            Add Price Rule
+            Add Product Price Rule
           </button>
         </div>
   
@@ -36,19 +36,17 @@
             <table class="w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
-                  <th @click="sort('name')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
-                    Rule Name
-                    <ArrowsUpDownIcon v-if="sortColumn === 'name'" :class="{ 'transform rotate-180': sortDirection === 'desc' }" class="inline-block w-4 h-4 ml-1" />
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Product Name
                   </th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Type
-                  </th>
-                  <th @click="sort('value')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
-                    Value
-                    <ArrowsUpDownIcon v-if="sortColumn === 'value'" :class="{ 'transform rotate-180': sortDirection === 'desc' }" class="inline-block w-4 h-4 ml-1" />
+                    Price Rule
                   </th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Validity
+                    Original Price
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Discounted Price
                   </th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
@@ -56,34 +54,34 @@
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
-                <tr v-for="rule in paginatedPriceRules" :key="rule.id">
+                <tr v-for="rule in paginatedProductPriceRules" :key="rule.id">
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="flex items-center">
-                      <div class="text-sm font-medium text-gray-900">{{ rule.name }}</div>
-                      <span :class="['ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full', getStatus(rule).class]">
-                        {{ getStatus(rule).text }}
+                      <div class="text-sm font-medium text-gray-900">{{ rule.productName }}</div>
+                      <span :class="getStatusClass(rule)" class="ml-2">
+                        {{ getStatus(rule) }}
                       </span>
                     </div>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ rule.type === 'percentage' ? 'Percentage' : 'Fixed Amount' }}
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-500">{{ rule.priceRuleName }}</div>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ formatValue(rule) }}
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-500">₱{{ rule.originalPrice.toFixed(2) }}</div>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ formatValidity(rule) }}
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-500">₱{{ rule.discountedPrice.toFixed(2) }}</div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div class="flex items-center space-x-2">
                       <button
-                        @click="editPriceRule(rule)"
+                        @click="editProductPriceRule(rule)"
                         class="text-green-600 hover:text-green-800 focus:outline-none"
                       >
                         <PencilSquareIcon class="h-5 w-5" />
                       </button>
                       <button
-                        @click="confirmDeletePriceRule(rule.id)"
+                        @click="confirmDeleteProductPriceRule(rule.id)"
                         class="text-red-600 hover:text-red-800 focus:outline-none"
                       >
                         <TrashIcon class="h-5 w-5" />
@@ -127,17 +125,17 @@
         </div>
       </div>
   
-      <AddPriceRule
+      <AddProductPriceRule
         v-else-if="currentView === 'add'"
         @cancel="showList"
-        @save="handleSavePriceRule"
+        @save="handleSaveProductPriceRule"
       />
   
-      <EditPriceRule
+      <EditProductPriceRule
         v-else-if="currentView === 'edit'"
-        :priceRule="selectedPriceRule"
+        :productPriceRule="selectedProductPriceRule"
         @cancel="showList"
-        @save="handleUpdatePriceRule"
+        @save="handleUpdateProductPriceRule"
       />
   
       <!-- Delete Confirmation Modal -->
@@ -147,12 +145,12 @@
             <h3 class="text-lg leading-6 font-medium text-gray-900">Confirm Deletion</h3>
             <div class="mt-2 px-7 py-3">
               <p class="text-sm text-gray-500">
-                Are you sure you want to delete this price rule? This action cannot be undone.
+                Are you sure you want to delete this product price rule? This action cannot be undone.
               </p>
             </div>
             <div class="items-center px-4 py-3">
               <button
-                @click="deletePriceRule"
+                @click="deleteProductPriceRule"
                 class="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-full w-full shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 mb-2"
               >
                 Delete
@@ -172,191 +170,120 @@
   
   <script setup>
   import { ref, computed, onMounted, watch } from 'vue'
+  import { useProductPriceRuleStore } from '@/store/modules/productPriceRules'
   import { usePriceRuleStore } from '@/store/modules/priceRules'
-  import AddPriceRule from '@/components/admin/AddPriceRule.vue'
-  import EditPriceRule from '@/components/admin/EditPriceRule.vue'
+  import AddProductPriceRule from '@/components/admin/AddProductPriceRule.vue'
+  import EditProductPriceRule from '@/components/admin/EditProductPriceRule.vue'
   import Alert from '@/components/common/Alert.vue'
   import { 
     MagnifyingGlassIcon, 
-    ArrowsUpDownIcon, 
     PencilSquareIcon, 
     TrashIcon,
     ChevronLeftIcon,
     ChevronRightIcon
   } from '@heroicons/vue/24/outline'
   
+  const productPriceRuleStore = useProductPriceRuleStore()
   const priceRuleStore = usePriceRuleStore()
   const currentView = ref('list')
   const searchQuery = ref('')
-  const selectedPriceRule = ref(null)
+  const selectedProductPriceRule = ref(null)
   const showAlert = ref(false)
   const alertType = ref('')
   const alertMessage = ref('')
   const showDeleteModal = ref(false)
-  const priceRuleToDelete = ref(null)
+  const productPriceRuleToDelete = ref(null)
   
-  const sortColumn = ref('name')
-  const sortDirection = ref('asc')
   const currentPage = ref(1)
   const rowsPerPage = ref(10)
   
   onMounted(async () => {
+    await productPriceRuleStore.fetchProductPriceRules()
     await priceRuleStore.fetchPriceRules()
   })
   
-  const priceRules = computed(() => priceRuleStore.priceRules)
+  const productPriceRules = computed(() => productPriceRuleStore.productPriceRules)
   
-  const filteredPriceRules = computed(() => {
-    return priceRules.value.filter(rule =>
-      rule.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  const filteredProductPriceRules = computed(() => {
+    return productPriceRules.value.filter(rule =>
+      rule.productName.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      rule.priceRuleName.toLowerCase().includes(searchQuery.value.toLowerCase())
     )
   })
   
-  const sortedPriceRules = computed(() => {
-    return [...filteredPriceRules.value].sort((a, b) => {
-      let modifier = sortDirection.value === 'asc' ? 1 : -1
-      if (a[sortColumn.value] < b[sortColumn.value]) return -1 * modifier
-      if (a[sortColumn.value] > b[sortColumn.value]) return 1 * modifier
-      return 0
-    })
-  })
+  const totalPages = computed(() => Math.ceil(filteredProductPriceRules.value.length / rowsPerPage.value))
   
-  const totalPages = computed(() => Math.ceil(sortedPriceRules.value.length / rowsPerPage.value))
-  
-  const paginatedPriceRules = computed(() => {
+  const paginatedProductPriceRules = computed(() => {
     const start = (currentPage.value - 1) * rowsPerPage.value
     const end = start + rowsPerPage.value
-    return sortedPriceRules.value.slice(start, end)
+    return filteredProductPriceRules.value.slice(start, end)
   })
   
-  const formatValue = (rule) => {
-    if (rule.type === 'percentage') {
-      return `${rule.value}%`
-    } else if (rule.type === 'fixed') {
-      return `₱${rule.value.toFixed(2)}`
-    }
-    return rule.value
-  }
-  
-  const formatValidity = (rule) => {
-    const now = new Date()
-    const startDate = new Date(rule.startDate)
-    const endDate = rule.endDate ? new Date(rule.endDate) : null
-  
-    const formatDateTime = (date) => {
-      return date.toLocaleString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      })
-    }
-  
-    if (startDate > now) {
-      return `Starts on ${formatDateTime(startDate)}`
-    } else if (endDate && endDate < now) {
-      return `Ended on ${formatDateTime(endDate)}`
-    } else if (endDate) {
-      return `Valid until ${formatDateTime(endDate)}`
-    } else {
-      return 'Always valid'
-    }
-  }
-  
-  const getStatus = (rule) => {
-    const now = new Date()
-    const startDate = new Date(rule.startDate)
-    const endDate = rule.endDate ? new Date(rule.endDate) : null
-    const in24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000)
-  
-    if (startDate > now) {
-      return { text: 'Scheduled', class: 'bg-blue-100 text-blue-800' }
-    } else if (endDate && endDate < now) {
-      return { text: 'Ended', class: 'bg-gray-100 text-gray-800' }
-    } else if (endDate && endDate <= in24Hours) {
-      return { text: 'Ending Soon', class: 'bg-yellow-100 text-yellow-800' }
-    } else if (!endDate || endDate > now) {
-      return { text: 'Active', class: 'bg-green-100 text-green-800' }
-    }
-  }
-  
-  const showAddPriceRule = () => {
+  const showAddProductPriceRule = () => {
     currentView.value = 'add'
-    priceRuleStore.clearError()
+    productPriceRuleStore.clearError()
   }
   
   const showList = () => {
     currentView.value = 'list'
-    selectedPriceRule.value = null
-    priceRuleStore.clearError()
+    selectedProductPriceRule.value = null
+    productPriceRuleStore.clearError()
   }
   
-  const editPriceRule = (rule) => {
-    selectedPriceRule.value = { ...rule }
+  const editProductPriceRule = (rule) => {
+    selectedProductPriceRule.value = { ...rule }
     currentView.value = 'edit'
-    priceRuleStore.clearError()
+    productPriceRuleStore.clearError()
   }
   
-  const confirmDeletePriceRule = (id) => {
-    priceRuleToDelete.value = id
+  const confirmDeleteProductPriceRule = (id) => {
+    productPriceRuleToDelete.value = id
     showDeleteModal.value = true
   }
   
-  const deletePriceRule = async () => {
-    if (priceRuleToDelete.value) {
-      const result = await priceRuleStore.deletePriceRule(priceRuleToDelete.value)
+  const deleteProductPriceRule = async () => {
+    if (productPriceRuleToDelete.value) {
+      const result = await productPriceRuleStore.deleteProductPriceRule(productPriceRuleToDelete.value)
       if (result.success) {
-        showAlertWithTimeout('success', 'Price rule deleted successfully')
+        showAlertWithTimeout('success', 'Product price rule deleted successfully')
       } else {
-        showAlertWithTimeout('error', `Error deleting price rule: ${result.error}`)
+        showAlertWithTimeout('error', `Error deleting product price rule: ${result.error}`)
       }
       showDeleteModal.value = false
-      priceRuleToDelete.value = null
+      productPriceRuleToDelete.value = null
     }
   }
   
   const cancelDelete = () => {
     showDeleteModal.value = false
-    priceRuleToDelete.value = null
+    productPriceRuleToDelete.value = null
   }
   
-  const handleSavePriceRule = async (newRule) => {
+  const handleSaveProductPriceRule = async (newRule) => {
     try {
-      const result = await priceRuleStore.addPriceRule(newRule)
+      const result = await productPriceRuleStore.addProductPriceRule(newRule)
       if (result.success) {
-        showAlertWithTimeout('success', 'Price rule added successfully')
-        await priceRuleStore.fetchPriceRules() // Refresh the list
+        showAlertWithTimeout('success', 'Product price rule added successfully')
         showList()
       } else {
         throw new Error(result.error)
       }
     } catch (error) {
-      showAlertWithTimeout('error', `Error adding price rule: ${error.message}`)
+      showAlertWithTimeout('error', `Error adding product price rule: ${error.message}`)
     }
   }
   
-  const handleUpdatePriceRule = async (updatedRule) => {
+  const handleUpdateProductPriceRule = async (updatedRule) => {
     try {
-      const result = await priceRuleStore.updatePriceRule(updatedRule.id, updatedRule)
+      const result = await productPriceRuleStore.updateProductPriceRule(updatedRule.id, updatedRule)
       if (result.success) {
-        showAlertWithTimeout('success', 'Price rule updated successfully')
+        showAlertWithTimeout('success', 'Product price rule updated successfully')
         showList()
       } else {
         throw new Error(result.error)
       }
     } catch (error) {
-      showAlertWithTimeout('error', `Error updating price rule: ${error.message}`)
-    }
-  }
-  
-  const sort = (column) => {
-    if (sortColumn.value === column) {
-      sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
-    } else {
-      sortColumn.value = column
-      sortDirection.value = 'asc'
+      showAlertWithTimeout('error', `Error updating product price rule: ${error.message}`)
     }
   }
   
@@ -388,28 +315,44 @@
       showAlert.value = false
     }, 3000)
   }
+  
+  const getStatus = (rule) => {
+    const now = new Date()
+    const priceRule = priceRuleStore.getPriceRuleById(rule.priceRuleId)
+    if (!priceRule) return 'Unknown'
+  
+    if (priceRule.startDate > now) {
+      return 'Scheduled'
+    } else if (priceRule.endDate && priceRule.endDate < now) {
+      return 'Ended'
+    } else if (priceRule.endDate && priceRule.endDate <= new Date(now.getTime() + 24 * 60 * 60 * 1000)) {
+      return 'Ending Soon'
+    } else {
+      return 'Active'
+    }
+  }
+  
+  const getStatusClass = (rule) => {
+    const status = getStatus(rule)
+    switch (status) {
+      case 'Scheduled':
+        return 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800'
+      case 'Ended':
+        return 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800'
+      case 'Ending Soon':
+        return 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800'
+      case 'Active':
+        return 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800'
+      default:
+        return 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800'
+    }
+  }
   </script>
   
   <style scoped>
   .rounded-full {
     border-radius: 9999px;
   }
-  
-  .shadow {
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-  }
-  
-  .transition {
-    transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 150ms;
-  }
-  
-  .ease-in-out {
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  
-  .duration-200 {
-    transition-duration: 200ms;
-  }
   </style>
+  
+  
