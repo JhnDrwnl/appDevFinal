@@ -1,6 +1,6 @@
 // store/modules/products.js
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { db, storage } from '@/services/firebase'
 import { 
   collection, 
@@ -23,12 +23,16 @@ import {
   listAll
 } from 'firebase/storage'
 import { useCategoryStore } from './categories'
+import { useCategoryPriceRuleStore } from './categoryPriceRules'
 
 export const useProductStore = defineStore('products', () => {
   const products = ref([])
   const isLoading = ref(false)
   const error = ref(null)
   const currentProduct = ref(null)
+
+  const categoryStore = useCategoryStore()
+  const categoryPriceRuleStore = useCategoryPriceRuleStore()
 
   async function fetchProducts() {
     isLoading.value = true
@@ -39,9 +43,14 @@ export const useProductStore = defineStore('products', () => {
         orderBy('createdAt', 'desc')
       )
       const querySnapshot = await getDocs(q)
-      
-      const categoryStore = useCategoryStore()
-      await categoryStore.fetchCategories()
+    
+      console.log('Fetching categories and price rules...')
+      await Promise.all([
+        categoryStore.fetchCategories(),
+        categoryPriceRuleStore.fetchCategoryPriceRules()
+      ])
+      console.log('Categories:', categoryStore.categories)
+      console.log('Category Price Rules:', categoryPriceRuleStore.categoryPriceRules)
 
       products.value = await Promise.all(querySnapshot.docs.map(async (doc) => {
         const data = doc.data()
@@ -49,7 +58,7 @@ export const useProductStore = defineStore('products', () => {
           const category = categoryStore.getCategoryById(categoryId)
           return category ? category.name : 'Unknown'
         }))
-        return {
+        const productWithCategories = {
           id: doc.id,
           ...data,
           price: parseFloat(data.price || 0),
@@ -62,13 +71,61 @@ export const useProductStore = defineStore('products', () => {
           thumbnailURL: data.thumbnailURL || null,
           createdAt: data.createdAt?.toDate() || new Date(),
         }
+        return applyPriceRules(productWithCategories)
       }))
+
+      console.log('Final products array:', products.value)
     } catch (err) {
       console.error('Error fetching products:', err)
       error.value = err.message
       throw err
     } finally {
       isLoading.value = false
+    }
+  }
+
+  function applyPriceRules(product) {
+    let finalPrice = product.price
+    let appliedRules = []
+
+    if (!categoryPriceRuleStore.categoryPriceRules) {
+      console.warn('Category price rules are not available')
+      return {
+        ...product,
+        originalPrice: product.price,
+        finalPrice: product.price,
+        appliedPriceRules: []
+      }
+    }
+
+    for (const categoryId of product.categoryIds) {
+      const category = categoryStore.getCategoryById(categoryId)
+      if (category?.priceRule) {
+        const priceRule = categoryPriceRuleStore.categoryPriceRules.find(
+          rule => rule.id === category.priceRule.id
+        )
+        if (priceRule) {
+          if (priceRule.priceRuleType === 'percentage') {
+            const discount = finalPrice * (priceRule.priceRuleValue / 100)
+            finalPrice -= discount
+          } else if (priceRule.priceRuleType === 'fixed') {
+            finalPrice -= priceRule.priceRuleValue
+          }
+          appliedRules.push({
+            categoryName: category.name,
+            ruleName: priceRule.priceRuleName,
+            ruleValue: priceRule.priceRuleValue,
+            ruleType: priceRule.priceRuleType
+          })
+        }
+      }
+    }
+
+    return {
+      ...product,
+      originalPrice: product.price,
+      finalPrice: Math.max(finalPrice, 0), // Ensure price doesn't go below 0
+      appliedPriceRules: appliedRules
     }
   }
 
@@ -93,7 +150,7 @@ export const useProductStore = defineStore('products', () => {
           thumbnailURL: data.thumbnailURL || null,
           createdAt: data.createdAt?.toDate() || new Date(),
         }
-        return currentProduct.value
+        return applyPriceRules(currentProduct.value)
       } else {
         throw new Error('Product not found')
       }
@@ -213,10 +270,9 @@ export const useProductStore = defineStore('products', () => {
         updatedAt: new Date()
       }
 
-      products.value = [newProduct, ...products.value]
+      products.value = [applyPriceRules(newProduct), ...products.value]
 
       // Increment product count for each category
-      const categoryStore = useCategoryStore()
       for (const categoryId of productData.categoryIds || []) {
         if (categoryId !== 'None') {
           await categoryStore.incrementProductCount(categoryId)
@@ -315,16 +371,15 @@ export const useProductStore = defineStore('products', () => {
 
       const index = products.value.findIndex(p => p.id === productId);
       if (index !== -1) {
-        products.value[index] = {
+        products.value[index] = applyPriceRules({
           ...products.value[index],
           ...firestoreData,
           id: productId,
           updatedAt: new Date()
-        };
+        });
       }
 
       // Update category product counts
-      const categoryStore = useCategoryStore()
       const oldCategoryIds = currentData.categoryIds || []
       const newCategoryIds = updatedData.categoryIds || []
 
@@ -403,7 +458,6 @@ export const useProductStore = defineStore('products', () => {
       }
 
       // Decrement product count for each category
-      const categoryStore = useCategoryStore()
       for (const categoryId of productData.categoryIds || []) {
         if (categoryId !== 'None') {
           await categoryStore.decrementProductCount(categoryId)
@@ -452,6 +506,7 @@ export const useProductStore = defineStore('products', () => {
     uploadImage,
     clearError,
     resetState,
+    applyPriceRules,
     getProductById: (productId) => products.value.find(product => product.id === productId),
     getProductsByCategory: (category) => products.value.filter(product => product.categoryIds.includes(category)),
     getInStockProducts: () => products.value.filter(product => product.stockQuantity > 0),
