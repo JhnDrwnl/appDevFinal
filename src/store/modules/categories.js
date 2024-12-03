@@ -2,7 +2,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { db } from '@/services/firebase'
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, increment, runTransaction } from 'firebase/firestore'
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, increment, runTransaction, deleteField } from 'firebase/firestore'
 import { useCategoryPriceRuleStore } from './categoryPriceRules'
 
 export const useCategoryStore = defineStore('categories', () => {
@@ -211,29 +211,34 @@ export const useCategoryStore = defineStore('categories', () => {
         }
 
         const categoryData = categoryDoc.data()
-        if (!categoryData.priceRule) {
-          throw new Error('No price rule to remove')
+        if (categoryData.priceRule) {
+          const priceRuleId = categoryData.priceRule.id
+
+          // Remove price rule from category
+          transaction.update(categoryRef, { 
+            priceRule: deleteField(),
+          })
+
+          // Remove price rule from categoryPriceRules collection if it exists
+          if (priceRuleId) {
+            const priceRuleRef = doc(db, 'categoryPriceRules', priceRuleId)
+            const priceRuleDoc = await transaction.get(priceRuleRef)
+            if (priceRuleDoc.exists()) {
+              transaction.delete(priceRuleRef)
+            }
+          }
+
+          // Update local state
+          const categoryToUpdate = categories.value.find(c => c.id === categoryId)
+          if (categoryToUpdate) {
+            categoryToUpdate.priceRule = null
+          }
+          categoryPriceRuleStore.categoryPriceRules.value = categoryPriceRuleStore.categoryPriceRules.value.filter(rule => rule.id !== priceRuleId)
         }
 
-        const priceRuleId = categoryData.priceRule.id
-
-        // Remove price rule from category
-        transaction.update(categoryRef, { priceRule: null })
-
-        // Remove price rule from categoryPriceRules collection
-        const priceRuleRef = doc(db, 'categoryPriceRules', priceRuleId)
-        transaction.delete(priceRuleRef)
-
-        // Update local state
-        const categoryToUpdate = categories.value.find(c => c.id === categoryId)
-        if (categoryToUpdate) {
-          categoryToUpdate.priceRule = null
-        }
-        categoryPriceRuleStore.categoryPriceRules.value = categoryPriceRuleStore.categoryPriceRules.value.filter(rule => rule.id !== priceRuleId)
+        // Remove price rules from all subcategories
+        await removeSubcategoriesPriceRule(categoryId, transaction)
       })
-
-      // Remove price rule from subcategories recursively
-      await removeSubcategoriesPriceRule(categoryId)
 
       return { success: true }
     } catch (err) {
@@ -245,13 +250,19 @@ export const useCategoryStore = defineStore('categories', () => {
     }
   }
 
-  const removeSubcategoriesPriceRule = async (parentId) => {
+  const removeSubcategoriesPriceRule = async (parentId, transaction) => {
     const subcategories = categories.value.filter(c => c.parentIds && c.parentIds.includes(parentId))
     for (const subcategory of subcategories) {
-      if (subcategory.priceRule) {
-        await removeCategoryPriceRule(subcategory.id)
-      }
-      await removeSubcategoriesPriceRule(subcategory.id)
+      const subcategoryRef = doc(db, 'categories', subcategory.id)
+      transaction.update(subcategoryRef, { 
+        priceRule: deleteField(),
+      })
+
+      // Update local state for subcategory
+      subcategory.priceRule = null
+
+      // Recursively remove price rules from nested subcategories
+      await removeSubcategoriesPriceRule(subcategory.id, transaction)
     }
   }
 

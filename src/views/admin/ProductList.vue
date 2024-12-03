@@ -99,16 +99,15 @@
                   </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  ₱{{ product.originalPrice.toFixed(2) }}
+                  ₱{{ product.price.toFixed(2) }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  ₱{{ product.finalPrice.toFixed(2) }}
+                  ₱{{ calculateFinalPrice(product).toFixed(2) }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <div v-if="product.appliedPriceRules && product.appliedPriceRules.length > 0">
-                    <div v-for="rule in product.appliedPriceRules" :key="rule.categoryName">
-                      {{ rule.categoryName }}: {{ rule.ruleName }} 
-                      ({{ rule.ruleType === 'percentage' ? rule.ruleValue + '%' : '₱' + rule.ruleValue }})
+                  <div v-if="getAppliedRules(product).length > 0">
+                    <div v-for="rule in getAppliedRules(product)" :key="rule.id">
+                      {{ rule.isProductRule ? 'Product' : 'Category' }}: {{ rule.name }} ({{ formatRuleValue(rule) }})
                     </div>
                   </div>
                   <div v-else>N/A</div>
@@ -227,6 +226,9 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useProductStore } from '@/store/modules/products'
+import { useProductPriceRuleStore } from '@/store/modules/productPriceRules'
+import { usePriceRuleStore } from '@/store/modules/priceRules'
+import { useCategoryStore } from '@/store/modules/categories'
 import { storeToRefs } from 'pinia'
 import { 
   MagnifyingGlassIcon as SearchIcon,
@@ -243,6 +245,9 @@ import ViewProduct from '@/components/admin/ViewProduct.vue'
 import Alert from '@/components/common/Alert.vue'
 
 const productStore = useProductStore()
+const productPriceRuleStore = useProductPriceRuleStore()
+const priceRuleStore = usePriceRuleStore()
+const categoryStore = useCategoryStore()
 const { products } = storeToRefs(productStore)
 
 const currentView = ref('list')
@@ -278,9 +283,9 @@ const sortedProducts = computed(() => {
     } else if (sortColumn.value === 'categories') {
       comparison = a.categories.join(', ').localeCompare(b.categories.join(', '))
     } else if (sortColumn.value === 'price') {
-      comparison = a.originalPrice - b.originalPrice
+      comparison = a.price - b.price
     } else if (sortColumn.value === 'finalPrice') {
-      comparison = a.finalPrice - b.finalPrice
+      comparison = calculateFinalPrice(a) - calculateFinalPrice(b)
     } else {
       if (a[sortColumn.value] < b[sortColumn.value]) comparison = -1
       if (a[sortColumn.value] > b[sortColumn.value]) comparison = 1
@@ -300,9 +305,14 @@ const paginatedProducts = computed(() => {
 
 onMounted(async () => {
   try {
-    await productStore.fetchProducts()
+    await Promise.all([
+      productStore.fetchProducts(),
+      productPriceRuleStore.fetchProductPriceRules(),
+      priceRuleStore.fetchPriceRules(),
+      categoryStore.fetchCategories()
+    ])
   } catch (error) {
-    showAlertMessage(`Error fetching products: ${error.message}`, 'error')
+    showAlertMessage(`Error fetching data: ${error.message}`, 'error')
   }
 })
 
@@ -420,6 +430,58 @@ const sort = (column) => {
     sortColumn.value = column
     sortDirection.value = 'asc'
   }
+}
+
+const getAppliedRules = (product) => {
+  const productRules = productPriceRuleStore.productPriceRules
+    .filter(rule => rule.productId === product.id)
+    .map(rule => {
+      const priceRule = priceRuleStore.priceRules.find(pr => pr.id === rule.priceRuleId)
+      return {
+        id: rule.id,
+        name: priceRule ? priceRule.name : 'Unknown Rule',
+        value: priceRule ? priceRule.value : 0,
+        type: priceRule ? priceRule.type : 'fixed',
+        isProductRule: true
+      }
+    })
+
+  const categoryRules = product.categoryIds.flatMap(categoryId => {
+    const category = categoryStore.getCategoryById(categoryId)
+    if (category && category.priceRule) {
+      return [{
+        id: category.priceRule.id,
+        name: `${category.name} - ${category.priceRule.priceRuleName}`,
+        value: category.priceRule.priceRuleValue,
+        type: category.priceRule.priceRuleType,
+        isProductRule: false
+      }]
+    }
+    return []
+  })
+
+  return [...productRules, ...categoryRules]
+}
+
+const calculateFinalPrice = (product) => {
+  let finalPrice = product.price
+  const appliedRules = getAppliedRules(product)
+
+  appliedRules.forEach(rule => {
+    if (rule.type === 'percentage') {
+      finalPrice *= (1 - rule.value / 100)
+    } else {
+      finalPrice -= rule.value
+    }
+  })
+
+  return Math.max(finalPrice, 0) // Ensure the price doesn't go below 0
+}
+
+const formatRuleValue = (rule) => {
+  return rule.type === 'percentage'
+    ? `${rule.value}%`
+    : `₱${rule.value.toFixed(2)}`
 }
 </script>
 

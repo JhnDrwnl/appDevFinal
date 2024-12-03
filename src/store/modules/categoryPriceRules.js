@@ -2,7 +2,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { db } from '@/services/firebase'
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, runTransaction } from 'firebase/firestore'
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, runTransaction, deleteField } from 'firebase/firestore'
 import { useCategoryStore } from './categories'
 
 export const useCategoryPriceRuleStore = defineStore('categoryPriceRules', () => {
@@ -120,7 +120,10 @@ export const useCategoryPriceRuleStore = defineStore('categoryPriceRules', () =>
         transaction.delete(priceRuleRef)
 
         // Remove the price rule from the category
-        transaction.update(categoryRef, { priceRule: null })
+        transaction.update(categoryRef, { priceRule: deleteField() })
+
+        // Remove price rules from all subcategories
+        await categoryStore.removeSubcategoriesPriceRule(categoryId, transaction)
       })
 
       // Update local states
@@ -130,9 +133,6 @@ export const useCategoryPriceRuleStore = defineStore('categoryPriceRules', () =>
       if (categoryToUpdate) {
         categoryToUpdate.priceRule = null
       }
-
-      // Remove price rule from subcategories
-      await categoryStore.removeSubcategoriesPriceRule(categoryId)
 
       return { success: true }
     } catch (err) {
