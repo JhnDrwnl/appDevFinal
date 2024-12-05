@@ -59,7 +59,7 @@
   const steps = [
     {
       title: 'Healthy Chicks',
-      description: 'We provide carefully bred Day-Old Chicks, Layer Hens, Broilers, and Specialty Breeds to suit your farming goals.',
+      description: 'We provide carefully bred Day-Old Chicks and Specialty Breeds to suit your farming goals.',
       icon: 'span',
       iconClass: 'icon-[fluent-emoji-high-contrast--chicken] h-16 w-16 text-[#FF9934]'
     },

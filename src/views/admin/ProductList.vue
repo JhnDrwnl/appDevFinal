@@ -1,4 +1,5 @@
 <!-- views/admin/ProductList.vue -->
+<!-- views/admin/ProductList.vue -->
 <template>
   <div class="w-full">
     <Alert 

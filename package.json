@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@googlemaps/js-api-loader": "^1.16.8",
     "@headlessui/vue": "^1.7.23",
     "@heroicons/vue": "^2.2.0",
     "@mdi/js": "^7.4.47",
@@ -42,6 +43,7 @@
     "quill": "^2.0.2",
     "vue": "^3.5.12",
     "vue-router": "^4.4.5",
+    "vue-youtube-embed": "^2.2.2",
     "vue3-tree-vue": "^2.0.11"
   },
   "devDependencies": {

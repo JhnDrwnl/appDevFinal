@@ -1,29 +1,19 @@
 <!-- layouts/UserLayout.vue -->
 <template>
   <div class="min-h-screen flex flex-col bg-gray-100">
-    <!-- Promotional Banner -->
-    <PromotionalBanner />
-
     <!-- Header -->
     <Header />
 
-    <!-- Breadcrumbs -->
-    <Breadcrumbs />
+
 
     <!-- Main Content -->
     <main class="flex-grow py-8">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex gap-8">
-
-          <!-- Main Content -->
-          <div class="flex-1 bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <router-view v-slot="{ Component }">
-              <transition name="fade" mode="out-in">
-                <component :is="Component" class="h-full" />
-              </transition>
-            </router-view>
-          </div>
-        </div>
+        <router-view v-slot="{ Component }">
+          <transition name="fade" mode="out-in">
+            <component :is="Component" class="h-full" />
+          </transition>
+        </router-view>
       </div>
     </main>
 
@@ -38,9 +28,7 @@
 <script setup>
 import Header from '@/components/common/Header.vue'
 import Footer from '@/components/landing/Footer.vue'
-import PromotionalBanner from '@/components/landing/PromotionalBanner.vue'
 import BottomBar from '@/components/common/BottomBar.vue'
-import Breadcrumbs from '@/components/common/Breadcrumbs.vue'
 </script>
 
 <style scoped>
@@ -54,7 +42,6 @@ import Breadcrumbs from '@/components/common/Breadcrumbs.vue'
   opacity: 0;
 }
 
-/* Add this new style */
 :deep(.router-view-container) {
   display: flex;
   flex-direction: column;

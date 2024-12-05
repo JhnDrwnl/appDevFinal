@@ -1,4 +1,3 @@
-// store/modules/products.js
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { db, storage } from '@/services/firebase'
@@ -62,9 +61,7 @@ export const useProductStore = defineStore('products', () => {
           id: doc.id,
           ...data,
           price: parseFloat(data.price || 0),
-          discountValue: parseFloat(data.discountValue || 0),
           stockQuantity: parseInt(data.stockQuantity || 0),
-          tags: data.tags || [],
           categories: categoryNames,
           categoryIds: data.categoryIds || [],
           imageURLs: data.imageURLs || [],
@@ -142,9 +139,7 @@ export const useProductStore = defineStore('products', () => {
           id: docSnap.id,
           ...data,
           price: parseFloat(data.price || 0),
-          discountValue: parseFloat(data.discountValue || 0),
           stockQuantity: parseInt(data.stockQuantity || 0),
-          tags: data.tags || [],
           categoryIds: data.categoryIds || [],
           imageURLs: data.imageURLs || [],
           thumbnailURL: data.thumbnailURL || null,
@@ -205,32 +200,24 @@ export const useProductStore = defineStore('products', () => {
     let uploadedFiles = []
 
     try {
-      if (!productData.name || !productData.price) {
-        throw new Error('Name and price are required')
-      }
-
       let thumbnailURL = null
       let thumbnailPath = null
       if (productData.thumbnailFile) {
         const result = await uploadImage(productData.thumbnailFile, null, true)
-        if (!result.success) throw new Error(result.error)
-        thumbnailURL = result.url
-        thumbnailPath = result.path
-        uploadedFiles.push(result.path)
-      } else {
-        throw new Error('Thumbnail is required')
+        if (result.success) {
+          thumbnailURL = result.url
+          thumbnailPath = result.path
+          uploadedFiles.push(result.path)
+        }
       }
 
       const docRef = await addDoc(collection(db, 'products'), {
-        name: productData.name,
-        description: productData.description,
-        price: parseFloat(productData.price),
+        name: productData.name || '',
+        description: productData.description || '',
+        price: parseFloat(productData.price) || 0,
         categoryIds: productData.categoryIds || [],
-        tags: productData.tags || [],
-        discountType: productData.discountType,
-        discountValue: parseFloat(productData.discountValue) || 0,
         stockQuantity: parseInt(productData.stockQuantity) || 0,
-        date: productData.date,
+        date: productData.date || new Date().toISOString().split('T')[0],
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         thumbnailURL: thumbnailURL,
@@ -244,10 +231,11 @@ export const useProductStore = defineStore('products', () => {
       if (productData.imageFiles?.length > 0) {
         for (const file of productData.imageFiles) {
           const result = await uploadImage(file, productId)
-          if (!result.success) throw new Error(result.error)
-          imageURLs.push(result.url)
-          imagePaths.push(result.path)
-          uploadedFiles.push(result.path)
+          if (result.success) {
+            imageURLs.push(result.url)
+            imagePaths.push(result.path)
+            uploadedFiles.push(result.path)
+          }
         }
       }
 
@@ -260,7 +248,7 @@ export const useProductStore = defineStore('products', () => {
         id: productId,
         ...productData,
         stockQuantity: parseInt(productData.stockQuantity) || 0,
-        price: parseFloat(productData.price),
+        price: parseFloat(productData.price) || 0,
         discountValue: parseFloat(productData.discountValue) || 0,
         imageURLs: imageURLs,
         thumbnailURL: thumbnailURL,
@@ -319,9 +307,6 @@ export const useProductStore = defineStore('products', () => {
         description: updatedData.description,
         price: parseFloat(updatedData.price) || 0,
         categoryIds: updatedData.categoryIds || [],
-        tags: updatedData.tags || [],
-        discountType: updatedData.discountType,
-        discountValue: parseFloat(updatedData.discountValue) || 0,
         stockQuantity: parseInt(updatedData.stockQuantity) || 0,
         date: updatedData.date,
         updatedAt: serverTimestamp()
@@ -511,8 +496,6 @@ export const useProductStore = defineStore('products', () => {
     getProductsByCategory: (category) => products.value.filter(product => product.categoryIds.includes(category)),
     getInStockProducts: () => products.value.filter(product => product.stockQuantity > 0),
     getOutOfStockProducts: () => products.value.filter(product => product.stockQuantity <= 0),
-    getProductsWithDiscount: () => products.value.filter(product => 
-      product.discountType !== 'none' && product.discountValue > 0
-    )
   }
 })
+

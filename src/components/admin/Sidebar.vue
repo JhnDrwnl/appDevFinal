@@ -17,9 +17,9 @@
       <div class="flex items-center h-16 px-4">
         <div class="flex items-center gap-3">
           <div class="flex-shrink-0">
-            <img src="@/assets/image/SALogo.png" alt="Supreme Agrivet Logo" class="w-8 h-8" />
+            <img src="@/assets/image/SALogo.png" alt="Supreme Agri-vet Logo" class="w-8 h-8" />
           </div>
-          <h1 v-if="isOpenState" class="text-lg font-semibold text-gray-900">Supreme Agrivet</h1>
+          <h1 v-if="isOpenState" class="text-lg font-semibold text-gray-900">Supreme Agri-vet</h1>
         </div>
       </div>
 

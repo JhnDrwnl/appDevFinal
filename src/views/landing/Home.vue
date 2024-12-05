@@ -1,8 +1,6 @@
 <!-- views/landing/Home.vue -->
 <template>
   <div class="min-h-screen flex flex-col bg-gray-50">
-    <!-- Promotional Banner -->
-    <PromotionalBanner />
 
     <!-- Header -->
     <Header />
@@ -14,9 +12,12 @@
       
       <!-- Content -->
       <div class="relative">
-        <About ref="aboutSection" />
-        <LatestProducts ref="productsSection" />
-        <Testimonials />
+        <div ref="aboutSection">
+          <About />
+        </div>
+        <div ref="productsSection">
+          <LatestProducts />
+        </div>
         <Education />
         <router-view v-if="!isDefaultRoute" v-slot="{ Component }">
           <transition name="fade" mode="out-in">
@@ -38,17 +39,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import Header from '@/components/landing/Header.vue'
+import Header from '@/components/common/Header.vue'
 import Footer from '@/components/landing/Footer.vue'
 import Carousel from '@/components/landing/Carousel.vue'
 import About from '@/components/landing/About.vue'
 import LatestProducts from '@/components/landing/LatestProducts.vue'
-import Testimonials from '@/components/landing/Testimonials.vue'
 import Education from '@/components/landing/Education.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
-import PromotionalBanner from '@/components/landing/PromotionalBanner.vue'
 import BottomBar from '@/components/common/BottomBar.vue'
 
 const route = useRoute()
@@ -56,10 +55,10 @@ const aboutSection = ref(null)
 const productsSection = ref(null)
 
 const isDefaultRoute = computed(() => {
-  return route.name === 'Home' || route.name === 'About' || route.name === 'Products'
+  return route.name === 'Home'
 })
 
-const scrollToSection = (sectionName) => {
+const scrollToSection = (sectionName, smooth = true) => {
   let section
   if (sectionName === 'about') {
     section = aboutSection.value
@@ -68,28 +67,13 @@ const scrollToSection = (sectionName) => {
   }
 
   if (section) {
-    section.$el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    section.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' })
   }
 }
 
 const handleScrollToSection = (event) => {
-  scrollToSection(event.detail)
+  scrollToSection(event.detail, true)
 }
-
-onMounted(() => {
-  window.addEventListener('scroll-to-section', handleScrollToSection)
-
-  // Initial scroll based on the route
-  if (route.name === 'About') {
-    scrollToSection('about')
-  } else if (route.name === 'Products') {
-    scrollToSection('latestproducts')
-  }
-})
-
-onUnmounted(() => {
-  window.removeEventListener('scroll-to-section', handleScrollToSection)
-})
 </script>
 
 <style scoped>
@@ -103,3 +87,4 @@ onUnmounted(() => {
   opacity: 0;
 }
 </style>
+

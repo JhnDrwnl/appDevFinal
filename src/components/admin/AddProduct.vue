@@ -120,60 +120,6 @@
                 />
               </div>
             </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Discount Type</label>
-              <div class="mt-1 flex items-center space-x-4">
-                <label class="inline-flex items-center">
-                  <input
-                    type="radio"
-                    v-model="product.discountType"
-                    value="none"
-                    class="form-radio text-[#FF9934]"
-                  />
-                  <span class="ml-2">No Discount</span>
-                </label>
-                <label class="inline-flex items-center">
-                  <input
-                    type="radio"
-                    v-model="product.discountType"
-                    value="percentage"
-                    class="form-radio text-[#FF9934]"
-                  />
-                  <span class="ml-2">Percentage %</span>
-                </label>
-                <label class="inline-flex items-center">
-                  <input
-                    type="radio"
-                    v-model="product.discountType"
-                    value="fixed"
-                    class="form-radio text-[#FF9934]"
-                  />
-                  <span class="ml-2">Fixed Price</span>
-                </label>
-              </div>
-            </div>
-            <div v-if="product.discountType !== 'none'">
-              <label class="block text-sm font-medium text-gray-700">
-                {{ product.discountType === 'percentage' ? 'Discount Percentage' : 'Discount Amount' }}
-              </label>
-              <div class="mt-1 relative rounded-lg">
-                <span v-if="product.discountType === 'fixed'" class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
-                  ₱
-                </span>
-                <input
-                  v-model="product.discountValue"
-                  type="number"
-                  :step="product.discountType === 'percentage' ? '1' : '0.01'"
-                  :min="0"
-                  :max="product.discountType === 'percentage' ? 100 : undefined"
-                  class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9934]"
-                  :class="{ 'pl-7': product.discountType === 'fixed' }"
-                />
-                <span v-if="product.discountType === 'percentage'" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500">
-                  %
-                </span>
-              </div>
-            </div>
             <!-- Stock Section -->
             <div>
               <label class="block text-sm font-medium text-gray-700">Stock Quantity</label>
@@ -272,31 +218,6 @@
                     @select-parent="toggleCategory"
                   />
                 </div>
-              </div>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Tags</label>
-              <input
-                v-model="newTag"
-                @keyup.enter="addTag"
-                type="text"
-                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9934]"
-                placeholder="Add tags"
-              />
-              <div class="mt-2 flex flex-wrap gap-2">
-                <span
-                  v-for="tag in product.tags"
-                  :key="tag"
-                  class="inline-flex items-center px-2 py-1 rounded-full text-sm bg-gray-100"
-                >
-                  {{ tag }}
-                  <button
-                    @click="removeTag(tag)"
-                    class="ml-1 text-gray-500 hover:text-gray-700"
-                  >
-                    ×
-                  </button>
-                </span>
               </div>
             </div>
           </div>
@@ -430,15 +351,11 @@ const product = ref({
   name: '',
   description: '',
   price: '',
-  tags: [],
-  discountType: 'none',
-  discountValue: 0,
   stockQuantity: '', 
   date: new Date().toISOString().split('T')[0],
-  categoryIds: []
+  categoryIds: [],
 })
 
-const newTag = ref('')
 const thumbnailFile = ref(null)
 const thumbnailPreview = ref(null)
 const imageFiles = ref([])
@@ -501,17 +418,6 @@ const stockStatus = computed(() => {
     color: 'text-green-500'
   }
 })
-
-const addTag = () => {
-  if (newTag.value.trim() && !product.value.tags.includes(newTag.value.trim())) {
-    product.value.tags.push(newTag.value.trim())
-    newTag.value = ''
-  }
-}
-
-const removeTag = (tag) => {
-  product.value.tags = product.value.tags.filter(t => t !== tag)
-}
 
 const handleDrop = (event) => {
   event.preventDefault()
@@ -609,32 +515,18 @@ const saveProduct = async () => {
   error.value = null
 
   try {
-    if (!product.value.name?.trim()) {
-      throw new Error('Product name is required')
-    }
-    if (!product.value.price || isNaN(parseFloat(product.value.price))) {
-      throw new Error('Valid price is required')
-    }
-    if (!thumbnailFile.value) {
-      throw new Error('Thumbnail image is required')
-    }
-    if (product.value.categoryIds.length === 0) {
-      throw new Error('At least one category is required')
-    }
-
     const productData = {
       ...product.value,
       description: editor.value?.getHTML() || '',
-      price: parseFloat(product.value.price),
+      price: parseFloat(product.value.price) || 0,
       thumbnailFile: thumbnailFile.value,
       imageFiles: imageFiles.value,
       stockQuantity: parseInt(product.value.stockQuantity) || 0,
-      discountValue: parseFloat(product.value.discountValue) || 0,
-      categoryIds: product.value.categoryIds.length > 0 ? product.value.categoryIds : ['None']
+      categoryIds: product.value.categoryIds.length > 0 ? product.value.categoryIds : ['None'],
     }
 
     const result = await productStore.addProduct(productData)
-    
+
     if (result.success) {
       emit('saved', result)
     } else {
@@ -720,3 +612,4 @@ const saveProduct = async () => {
   user-select: none;
 }
 </style>
+

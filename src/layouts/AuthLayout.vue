@@ -1,14 +1,8 @@
-<!-- layouts/LandingLayout.vue -->
+<!-- layouts/AuthLayout.vue -->
 <template>
   <div class="min-h-screen flex flex-col bg-gray-100">
-    <!-- Promotional Banner -->
-    <PromotionalBanner />
-
     <!-- Header -->
     <Header />
-
-    <!-- Breadcrumbs -->
-    <Breadcrumbs />
 
     <!-- Main Content -->
     <main class="flex-grow py-8">
@@ -40,11 +34,9 @@
 </template>
 
 <script setup>
-import Header from '@/components/landing/Header.vue'
+import Header from '@/components/common/Header.vue'
 import Footer from '@/components/landing/Footer.vue'
-import PromotionalBanner from '@/components/landing/PromotionalBanner.vue'
 import BottomBar from '@/components/common/BottomBar.vue'
-import Breadcrumbs from '@/components/common/Breadcrumbs.vue'
 import AccountSidebar from '@/components/common/Sidebar.vue'
 </script>
 

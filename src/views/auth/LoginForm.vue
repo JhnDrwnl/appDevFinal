@@ -178,7 +178,7 @@ const handleLogin = async () => {
     isSigningIn.value = true
     const result = await authStore.login(email.value, password.value, rememberMe.value)
     if (result.success) {
-      router.push(authStore.isAdmin ? { name: 'AdminDashboard' } : { name: 'UserHome' })
+      router.push(authStore.isAdmin ? { name: 'AdminDashboard' } : { name: 'UserAccount' })
     } else {
       setAlert(result.error, alertTypes.error)
     }
