@@ -9,6 +9,8 @@ import PriceRuleList from '@/views/admin/PriceRuleList.vue'
 import CustomerManagement from '@/views/admin/CustomerManagement.vue'
 import ProductPriceRuleList from '@/views/admin/ProductPriceRuleList.vue'
 import CategoryPriceRuleList from '@/views/admin/CategoryPriceRuleList.vue'
+import ReservationList from '@/views/admin/ReservationList.vue'
+import RemovalRequest from '@/components/admin/RemovalRequestForm.vue'
 
 export default [
   {
@@ -59,6 +61,12 @@ export default [
             path: 'customers',
             name: 'AdminCustomers',
             component: CustomerManagement
+          },
+          {
+            path: 'removal-request/:id',
+            name: 'RemovalRequestForm',
+            component: RemovalRequest,
+            props: true
           }
         ]
       },
@@ -81,6 +89,17 @@ export default [
             name: 'AdminCategoryPriceRule',
             component: CategoryPriceRuleList
           },
+        ]
+      },
+      {
+        path: 'reservation',
+        name: 'AdminReservation',
+        children: [
+          {
+            path: 'reservation',
+            name: 'AdminReservation',
+            component: ReservationList
+          }
         ]
       },
     ]

@@ -1,15 +1,14 @@
 // store/modules/auth.js
-// store/modules/auth.js
 import { defineStore } from 'pinia'
 import { 
   auth,
-  signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
   sendPasswordResetEmail,
-  updatePassword,
   updateEmail,
+  updatePassword,
   setPersistence,
   browserSessionPersistence,
   browserLocalPersistence,
@@ -17,14 +16,15 @@ import {
   applyActionCode,
   isSignInWithEmailLink,
   signInWithEmailLink,
-  reauthenticateWithCredential,
   EmailAuthProvider,
+  reauthenticateWithCredential,
   verifyBeforeUpdateEmail,
   updateProfile
 } from '@/services/firebase'
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db, storage } from '@/services/firebase'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { useBasketStore } from './basket'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -84,6 +84,19 @@ export const useAuthStore = defineStore('auth', {
         }
         
         await this.fetchUserRole(this.user.uid)
+
+        const userDoc = await getDoc(doc(db, 'users', this.user.uid))
+        const isFirstLogin = !userDoc.data().hasLoggedInBefore
+
+        if (isFirstLogin) {
+          const basketStore = useBasketStore()
+          await basketStore.convertGuestToUser(this.user.uid)
+
+          await updateDoc(doc(db, 'users', this.user.uid), {
+            hasLoggedInBefore: true
+          })
+        }
+
         localStorage.setItem('rememberMe', rememberMe.toString())
         return { success: true }
       } catch (error) {
@@ -100,22 +113,19 @@ export const useAuthStore = defineStore('auth', {
         this.isLoading = true
         this.error = null
         
-        // Create user in Firebase Authentication
         const userCredential = await createUserWithEmailAndPassword(auth, email, password)
         const user = userCredential.user
         
-        // Create user document in Firestore with createdAt field
         await setDoc(doc(db, 'users', user.uid), {
           email: user.email,
           username: username || `user${user.uid.substring(0, 8)}`,
           role: 'user',
-          createdAt: serverTimestamp()
+          createdAt: serverTimestamp(),
+          hasLoggedInBefore: false
         })
         
-        // Send email verification
         await sendEmailVerification(user)
         
-        // Logout the user after registration
         await this.logout()
         
         return { 
@@ -155,7 +165,7 @@ export const useAuthStore = defineStore('auth', {
           await this.setUserRole(uid, 'user')
         }
         this.user = { ...this.user, role: this.userRole }
-        console.log('User role set:', this.userRole) // Add this line
+        console.log('User role set:', this.userRole)
       } catch (error) {
         console.error('Error fetching user role:', error)
         this.userRole = 'user'
@@ -301,21 +311,17 @@ export const useAuthStore = defineStore('auth', {
         this.isLoading = true;
         this.error = null;
 
-        // Re-authenticate the user
         const credential = EmailAuthProvider.credential(
           auth.currentUser.email,
           currentPassword
         );
         await reauthenticateWithCredential(auth.currentUser, credential);
 
-        // Use verifyBeforeUpdateEmail instead of updateEmail
         await verifyBeforeUpdateEmail(auth.currentUser, newEmail);
 
-        // Update email in Firestore
         const userDocRef = doc(db, 'users', auth.currentUser.uid);
         await updateDoc(userDocRef, { email: newEmail });
 
-        // Update local user state
         this.user = { ...this.user, email: newEmail };
 
         return { 
@@ -336,7 +342,6 @@ export const useAuthStore = defineStore('auth', {
         this.isLoading = true;
         this.error = null;
 
-        // Check if the new password is the same as the current password
         if (currentPassword === newPassword) {
           return { 
             success: false, 
@@ -344,7 +349,6 @@ export const useAuthStore = defineStore('auth', {
           };
         }
 
-        // Re-authenticate the user
         const credential = EmailAuthProvider.credential(
           auth.currentUser.email,
           currentPassword
@@ -360,7 +364,6 @@ export const useAuthStore = defineStore('auth', {
           };
         }
 
-        // Update the password
         await updatePassword(auth.currentUser, newPassword);
 
         return { 
@@ -381,29 +384,24 @@ export const useAuthStore = defineStore('auth', {
       try {
         console.log('Starting profile picture update process')
 
-        // 1. Upload to Firebase Storage
         const fileRef = ref(storage, `profile_pictures/${this.user.uid}`)
         console.log('Uploading file to Firebase Storage')
         await uploadBytes(fileRef, file)
         console.log('File uploaded successfully')
 
-        // 2. Get download URL
         console.log('Getting download URL')
         const photoURL = await getDownloadURL(fileRef)
         console.log('Download URL obtained:', photoURL)
 
-        // 3. Update Auth profile
         console.log('Updating Auth profile')
         await updateProfile(auth.currentUser, { photoURL })
         console.log('Auth profile updated successfully')
 
-        // 4. Update Firestore
         console.log('Updating Firestore document')
         const userDocRef = doc(db, 'users', this.user.uid)
         await setDoc(userDocRef, { photoURL }, { merge: true })
         console.log('Firestore document updated successfully')
 
-        // 5. Update local user state
         this.user = { ...this.user, photoURL }
         console.log('Local user state updated')
 

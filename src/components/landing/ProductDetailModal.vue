@@ -256,3 +256,5 @@
     currentImageIndex.value = index;
   };
   </script>
+  
+  

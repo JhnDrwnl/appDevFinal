@@ -10,11 +10,7 @@
               class="p-2.5 rounded-xl text-black hover:bg-gray-50/75 transition-colors duration-200"
               aria-label="Toggle sidebar"
             >
-              <svg width="18" height="12" viewBox="0 0 18 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M0 0H18V2H0V0Z" fill="black"/>
-                <path d="M0 5H12V7H0V5Z" fill="black"/>
-                <path d="M0 10H6V12H0V10Z" fill="black"/>
-              </svg>
+              <MenuIcon class="h-5 w-5" />
             </button>
           </div>
 
@@ -25,35 +21,56 @@
                 <input
                   type="text"
                   placeholder="Try to searching"
-                  class="w-80 px-5 py-2.5 text-sm bg-gray-50/50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-transparent transition-all duration-200"
+                  class="w-80 px-5 py-2.5 text-sm bg-gray-50/50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF9934]/10 focus:border-transparent transition-all duration-200"
                 />
-                <Search class="absolute right-4 top-2.5 h-5 w-5 text-gray-400" />
+                <SearchIcon class="absolute right-4 top-2.5 h-5 w-5 text-gray-400" />
               </div>
             </div>
 
-            <!-- Additional icons -->
-            <button class="text-gray-500 hover:text-gray-700 transition-colors duration-200 relative">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <path d="M16 10a4 4 0 0 1-8 0"></path>
-              </svg>
-              <span class="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">0</span>
-            </button>
+            <!-- Notifications Dropdown -->
+            <div class="relative">
+              <button
+                @click="toggleNotifications"
+                class="text-gray-500 hover:text-gray-700 transition-colors duration-200 relative"
+              >
+                <BellIcon class="h-5 w-5" />
+                <span v-if="totalNotificationsCount > 0" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                  {{ totalNotificationsCount }}
+                </span>
+              </button>
 
+              <div
+                v-if="isNotificationsOpen"
+                class="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50"
+              >
+                <div v-if="totalNotificationsCount === 0" class="px-4 py-2 text-sm text-gray-700">
+                  No new notifications
+                </div>
+                <div v-else>
+                  <div v-if="removalRequestsCount > 0">
+                    <h3 class="px-4 py-2 text-xs font-semibold text-gray-500 uppercase">Removal Requests</h3>
+                    <div v-for="request in removalRequests" :key="request.id" class="px-4 py-2 hover:bg-gray-50">
+                      <router-link :to="{ name: 'RemovalRequestForm', params: { id: request.id } }" class="text-sm text-gray-700">
+                        Removal request for item {{ request.itemId }}
+                      </router-link>
+                    </div>
+                  </div>
+                  <!-- Add other notification types here -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Orders -->
             <button class="text-gray-500 hover:text-gray-700 transition-colors duration-200 relative">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-              </svg>
-              <span class="absolute -top-1 -right-1 bg-green-500 w-2 h-2 rounded-full"></span>
+              <ShoppingBagIcon class="h-5 w-5" />
+              <span class="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">0</span>
             </button>
 
             <!-- Profile Dropdown -->
             <div class="relative ml-auto">
               <button
                 @click="toggleUserMenu"
-                class="focus:outline-none focus:ring-2 focus:ring-blue-500/10 rounded-xl transition-all duration-200"
+                class="focus:outline-none focus:ring-2 focus:ring-[#FF9934]/10 rounded-xl transition-all duration-200"
                 aria-haspopup="true"
                 :aria-expanded="isUserMenuOpen"
               >
@@ -78,7 +95,7 @@
                   class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
                   @click="handleMyPreferences"
                 >
-                  <Settings class="w-4 h-4 mr-2" />
+                  <SettingsIcon class="w-4 h-4 mr-2" />
                   My Preferences
                 </router-link>
                 <div class="border-t border-gray-50 mt-2 pt-2">
@@ -100,19 +117,40 @@
 </template>
 
 <script setup>
-import { ref, computed, inject } from 'vue'
+import { ref, computed, inject, onMounted } from 'vue'
 import { useAuthStore } from '@/store/modules/auth'
+import { useRemovalRequestStore } from '@/store/modules/removalRequests'
 import { useRouter } from 'vue-router'
-import { Search, Settings } from 'lucide-vue-next'
+import { 
+  MenuIcon, 
+  SearchIcon, 
+  BellIcon, 
+  ShoppingBagIcon, 
+  SettingsIcon 
+} from 'lucide-vue-next'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const removalRequestStore = useRemovalRequestStore()
 
 const isUserMenuOpen = ref(false)
+const isNotificationsOpen = ref(false)
 const user = computed(() => authStore.user)
+
+const removalRequests = computed(() => removalRequestStore.removalRequests)
+const removalRequestsCount = computed(() => removalRequests.value.length)
+
+// Placeholder for other notification types
+const otherNotificationsCount = ref(0)
+
+const totalNotificationsCount = computed(() => removalRequestsCount.value + otherNotificationsCount.value)
 
 const toggleUserMenu = () => {
   isUserMenuOpen.value = !isUserMenuOpen.value
+}
+
+const toggleNotifications = () => {
+  isNotificationsOpen.value = !isNotificationsOpen.value
 }
 
 const closeUserMenu = () => {
@@ -136,6 +174,15 @@ const handleMyPreferences = () => {
   openAdminDropdown()
 }
 
+const fetchNotifications = async () => {
+  await removalRequestStore.fetchRemovalRequests()
+  // Fetch other notification types here
+}
+
+onMounted(() => {
+  fetchNotifications()
+})
+
 defineProps({
   isSidebarOpen: {
     type: Boolean,
@@ -145,3 +192,4 @@ defineProps({
 
 defineEmits(['toggle-sidebar'])
 </script>
+

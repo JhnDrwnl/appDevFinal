@@ -12,7 +12,6 @@
           <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
         </svg>
       </button>
-      <span class="text-sm text-gray-500">Product Compare ({{ compareCount }})</span>
     </div>
     <div class="flex items-center space-x-4">
       <div class="flex items-center">
@@ -44,7 +43,6 @@ import { ref } from 'vue';
 const sortBy = ref('default');
 const itemsPerPage = ref(10);
 const view = ref('grid');
-const compareCount = ref(0);
 
 const emit = defineEmits(['update-items-per-page', 'update-sort', 'update-view']);
 
@@ -61,3 +59,6 @@ const toggleView = (newView) => {
   emit('update-view', newView);
 };
 </script>
+
+
+

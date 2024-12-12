@@ -29,15 +29,11 @@ import {
   UserPlus,
   User,
   BookOpen,
-  Heart,
-  ShoppingBag,
-  Download,
-  Gift,
   RotateCcw,
-  CreditCard,
   Mail,
   LogOut
 } from 'lucide-vue-next'
+import { ShoppingBasket} from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
@@ -47,13 +43,8 @@ const menuItems = [
   { name: 'Login', to: '/auth/login', icon: LogIn, requiresGuest: true },
   { name: 'Register', to: '/auth/register', icon: UserPlus, requiresGuest: true },
   { name: 'My Account', to: '/auth/account', icon: User, requiresAuth: true },
-  { name: 'Address Book', to: '/account/address', icon: BookOpen, requiresAuth: true },
-  { name: 'Wish List', to: '/account/wishlist', icon: Heart, requiresAuth: true },
-  { name: 'Order History', to: '/account/orders', icon: ShoppingBag, requiresAuth: true },
-  { name: 'Downloads', to: '/account/downloads', icon: Download, requiresAuth: true },
-  { name: 'Reward Points', to: '/account/rewards', icon: Gift, requiresAuth: true },
-  { name: 'Returns', to: '/account/returns', icon: RotateCcw, requiresAuth: true },
-  { name: 'Transactions', to: '/account/transactions', icon: CreditCard, requiresAuth: true },
+  { name: 'Address Book', to: '/auth/address', icon: BookOpen, requiresAuth: true },
+  { name: 'Reservation History', to: '/auth/reservation', icon: ShoppingBasket, requiresAuth: true },
   { name: 'Newsletter', to: '/account/newsletter', icon: Mail, requiresAuth: true },
 ]
 
@@ -68,7 +59,7 @@ const filteredMenuItems = computed(() => {
 
 const handleItemClick = (item) => {
   if (item.requiresAuth && !authStore.isAuthenticated) {
-    router.push('/auth/login')
+    router.push('/auth/register')
   } else if (item.name === 'Logout') {
     handleLogout()
   }

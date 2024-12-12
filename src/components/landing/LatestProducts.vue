@@ -12,7 +12,7 @@
 
       <!-- Products Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        <div v-for="product in latestProducts" :key="product.id" class="bg-white rounded-lg shadow-sm overflow-hidden group">
+        <div v-for="product in latestProducts" :key="product.id" class="bg-white rounded-lg shadow-sm overflow-hidden flex flex-col">
           <!-- Product Image Container -->
           <div class="relative aspect-square overflow-hidden">
             <!-- Stock Status Badge -->
@@ -31,26 +31,6 @@
                 NEW
               </span>
             </div>
-            
-            <!-- Action Buttons -->
-            <div class="absolute right-4 top-16 flex flex-col gap-2 z-10">
-              <button 
-                @click="showProductDetails(product)"
-                class="bg-[#FF9934] p-2 rounded-full shadow-md text-white hover:bg-[#FF8000] transition-all duration-300 ease-in-out opacity-0 group-hover:opacity-100 transform translate-x-full group-hover:translate-x-0"
-              >
-                <EyeIcon class="w-5 h-5" />
-              </button>
-              <button 
-                class="bg-[#FF9934] p-2 rounded-full shadow-md text-white hover:bg-[#FF8000] transition-all duration-300 ease-in-out opacity-0 group-hover:opacity-100 transform translate-x-full group-hover:translate-x-0 delay-[50ms]"
-              >
-                <HeartIcon class="w-5 h-5" />
-              </button>
-              <button 
-                class="bg-[#FF9934] p-2 rounded-full shadow-md text-white hover:bg-[#FF8000] transition-all duration-300 ease-in-out opacity-0 group-hover:opacity-100 transform translate-x-full group-hover:translate-x-0 delay-[100ms]"
-              >
-                <BarChart3Icon class="w-5 h-5" />
-              </button>
-            </div>
 
             <!-- Product Image -->
             <img 
@@ -61,76 +41,64 @@
           </div>
 
           <!-- Product Info -->
-          <div class="p-6">
-            <!-- Rating -->
-            <div class="flex gap-1 mb-2">
-              <StarIcon 
-                v-for="i in 5" 
-                :key="i"
-                :class="[
-                  'w-4 h-4',
-                  i <= (product.rating || 0) ? 'text-[#FF9934]' : 'text-gray-200'
-                ]"
-              />
-            </div>
-
+          <div class="p-6 flex flex-col flex-grow">
             <!-- Product Name -->
             <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ product.name }}</h3>
 
-            <!-- Prices and Action -->
-            <div class="flex items-center justify-between relative">
-              <div>
+            <!-- Product Description -->
+            <div class="text-sm text-gray-600 mb-4 flex-grow" v-html="truncateDescription(product.description, 100)"></div>
+
+            <!-- Prices and Discounts -->
+            <div class="mt-auto">
+              <div class="flex items-center justify-between mb-2">
                 <span class="text-xl font-bold text-[#FF9934]">
                   ₱{{ product.finalPrice.toFixed(2) }}
                 </span>
-                <span v-if="product.finalPrice < product.price" class="ml-2 text-sm line-through text-gray-500">
+                <span v-if="product.finalPrice < product.price" class="text-sm line-through text-gray-500">
                   ₱{{ product.price.toFixed(2) }}
                 </span>
               </div>
+
+              <!-- Applied Rules -->
+              <div v-if="product.appliedRules && product.appliedRules.length > 0" class="text-sm text-gray-600 mb-2">
+                <p v-for="rule in product.appliedRules" :key="rule.id" class="font-semibold">
+                  {{ rule.name }}: {{ formatRuleValue(rule) }}
+                </p>
+              </div>
+
+              <!-- Reserve Button -->
               <button 
                 v-if="product.stockQuantity > 0"
                 @click="showProductDetails(product)"
-                class="bg-[#FF9934] hover:bg-[#FF8000] text-white px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out absolute right-0 opacity-0 group-hover:opacity-100 transform translate-y-full group-hover:translate-y-0 delay-[150ms]"
+                class="bg-[#FF9934] hover:bg-[#FF8000] text-white px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out w-full"
               >
                 RESERVE
               </button>
-            </div>
-
-            <!-- Applied Rules -->
-            <div v-if="product.appliedRules.length > 0" class="mt-2 text-sm text-gray-600">
-              <p class="font-semibold">Applied discounts:</p>
-              <ul class="list-disc list-inside">
-                <li v-for="rule in product.appliedRules" :key="rule.id">
-                  {{ rule.name }}: {{ formatRuleValue(rule) }}
-                </li>
-              </ul>
             </div>
           </div>
         </div>
       </div>
     </div>
+    <ProductDetailModal
+      :is-open="!!selectedProduct"
+      :product="selectedProduct"
+      @close="selectedProduct = null"
+      @reserve="handleReserve"
+    />
   </div>
-  <ProductDetailModal
-    :is-open="!!selectedProduct"
-    :product="selectedProduct"
-    @close="closeProductModal"
-    @reserve="handleReserve"
-  />
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { EyeIcon, HeartIcon, StarIcon, BarChart3Icon } from 'lucide-vue-next';
 import { useProductStore } from '@/store/modules/products';
 import { useProductPriceRuleStore } from '@/store/modules/productPriceRules';
 import { usePriceRuleStore } from '@/store/modules/priceRules';
-import { useCategoryStore } from '@/store/modules/categories';
 import ProductDetailModal from '@/components/landing/ProductDetailModal.vue';
+import DOMPurify from 'dompurify';
 
 const productStore = useProductStore();
 const productPriceRuleStore = useProductPriceRuleStore();
 const priceRuleStore = usePriceRuleStore();
-const categoryStore = useCategoryStore();
 
 const latestProducts = ref([]);
 const selectedProduct = ref(null);
@@ -141,7 +109,6 @@ onMounted(async () => {
       productStore.fetchProducts(),
       productPriceRuleStore.fetchProductPriceRules(),
       priceRuleStore.fetchPriceRules(),
-      categoryStore.fetchCategories()
     ]);
     
     latestProducts.value = productStore.products
@@ -170,25 +137,10 @@ const getAppliedRules = (product) => {
         name: priceRule ? priceRule.name : 'Unknown Rule',
         value: priceRule ? priceRule.value : 0,
         type: priceRule ? priceRule.type : 'fixed',
-        isProductRule: true
       };
     });
 
-  const categoryRules = product.categoryIds.flatMap(categoryId => {
-    const category = categoryStore.getCategoryById(categoryId);
-    if (category && category.priceRule) {
-      return [{
-        id: category.priceRule.id,
-        name: `${category.name} - ${category.priceRule.priceRuleName}`,
-        value: category.priceRule.priceRuleValue,
-        type: category.priceRule.priceRuleType,
-        isProductRule: false
-      }];
-    }
-    return [];
-  });
-
-  return [...productRules, ...categoryRules];
+  return productRules;
 };
 
 const calculateFinalPrice = (product, appliedRules) => {
@@ -211,6 +163,24 @@ const formatRuleValue = (rule) => {
     : `₱${rule.value.toFixed(2)} off`;
 };
 
+const truncateDescription = (html, maxLength) => {
+  const sanitizedHtml = DOMPurify.sanitize(html || '');
+  const div = document.createElement('div');
+  div.innerHTML = sanitizedHtml;
+  let text = div.textContent || div.innerText || '';
+  
+  if (text.length <= maxLength) {
+    return sanitizedHtml;
+  }
+  
+  text = text.substr(0, maxLength);
+  const lastSpaceIndex = text.lastIndexOf(' ');
+  if (lastSpaceIndex > 0) {
+    text = text.substr(0, lastSpaceIndex);
+  }
+  return text + '...';
+};
+
 const isNewProduct = (product) => {
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -221,25 +191,9 @@ const showProductDetails = (product) => {
   selectedProduct.value = product;
 };
 
-const closeProductModal = () => {
-  selectedProduct.value = null;
-};
-
 const handleReserve = ({ productId, quantity }) => {
   // Implement reserve functionality
   console.log('Reserving product:', { productId, quantity });
-  closeProductModal();
 };
 </script>
 
-<style scoped>
-.group:hover .group-hover\:opacity-100 {
-  opacity: 1;
-}
-.group:hover .group-hover\:translate-x-0 {
-  transform: translateX(0);
-}
-.group:hover .group-hover\:translate-y-0 {
-  transform: translateY(0);
-}
-</style>

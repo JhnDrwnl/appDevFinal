@@ -1,4 +1,4 @@
-<!-- views/auth/Login.vue -->
+<!-- views/auth/LoginForm.vue -->
 <template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
     <div class="grid md:grid-cols-2 gap-8">
@@ -120,6 +120,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/store/modules/auth'
+import { useBasketStore } from '@/store/modules/basket'
 import Alert from '@/components/common/Alert.vue'
 import { EyeIcon, EyeOffIcon, LoaderIcon } from 'lucide-vue-next'
 
@@ -129,6 +130,7 @@ const showPassword = ref(false)
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const basketStore = useBasketStore()
 
 const message = ref('')
 const alertType = ref('info')
@@ -171,15 +173,45 @@ function setAlert(msg, type = alertTypes.info) {
   showAlert.value = true
 }
 
+function getRoleBasedRedirect(role) {
+  console.log('Getting redirect for role:', role)
+  switch (role) {
+    case 'admin':
+      return { name: 'AdminDashboard' }
+    case 'cashier':
+      return { name: 'CashierDashboard' }
+    case 'driver':
+      return { name: 'DriverDashboard' }
+    case 'manager':
+      return { name: 'ManagerDashboard' }
+    case 'stock manager':
+      return { name: 'StockManagerDashboard' }
+    case 'user':
+      return { name: 'UserAccount' }
+    default:
+      return { name: 'UserAccount' }
+  }
+}
+
 const handleLogin = async () => {
   if (isSigningIn.value) return
 
   try {
     isSigningIn.value = true
+    console.log('Attempting login for email:', email.value)
     const result = await authStore.login(email.value, password.value, rememberMe.value)
     if (result.success) {
-      router.push(authStore.isAdmin ? { name: 'AdminDashboard' } : { name: 'UserAccount' })
+      console.log('Login successful. User role:', authStore.userRole)
+      if (result.isFirstLogin) {
+        await basketStore.convertGuestToUser(authStore.user.uid)
+        setAlert('Your guest cart items have been transferred to your account.', alertTypes.success)
+      }
+      await basketStore.fetchBasketItems()
+      const roleBasedRedirect = getRoleBasedRedirect(authStore.userRole)
+      console.log('Redirecting to:', roleBasedRedirect)
+      router.push(roleBasedRedirect)
     } else {
+      console.error('Login failed:', result.error)
       setAlert(result.error, alertTypes.error)
     }
   } catch (err) {

@@ -101,8 +101,10 @@ import {
   AdjustmentsHorizontalIcon,
   CurrencyDollarIcon,
   DocumentTextIcon,
-  CubeIcon
+  CubeIcon,
+  CalendarDaysIcon,
 } from '@heroicons/vue/24/outline'
+import { ShoppingBasket} from 'lucide-vue-next'
 
 const props = defineProps({
   isOpen: {
@@ -125,6 +127,7 @@ const isOpenState = computed(() => props.isOpen || (!isMobile.value && isHovered
 
 const regularMenuItems = [
   { name: 'Dashboard', path: '/admin/dashboard', icon: HomeIcon },
+  { name: 'Reserve Items', path: '/admin/reservation/reservation', icon: CalendarDaysIcon },
 ]
 
 const dropdownMenus = ref([
@@ -154,27 +157,7 @@ const dropdownMenus = ref([
     subItems: [
       { name: 'Customers', path: '/admin/customers/customers', icon: UsersIcon },
       { name: 'Addresses', path: '/admin/customers/addresses', icon: MapPinIcon },
-      { name: 'Shopping Cart', path: '/admin/customers/cart', icon: ShoppingCartIcon },
-    ]
-  },
-  {
-    name: 'Orders',
-    icon: ShoppingCartIcon,
-    isOpen: false,
-    subItems: [
-      { name: 'Invoices', path: '/admin/orders/invoices', icon: ReceiptPercentIcon },
-      { name: 'Delivery Slips', path: '/admin/orders/delivery-slips', icon: DocumentTextIcon },
-      { name: 'Statuses', path: '/admin/orders/statuses', icon: ClipboardDocumentCheckIcon },
-      { name: 'Order Messages', path: '/admin/orders/messages', icon: ChatBubbleLeftRightIcon },
-    ]
-  },
-  {
-    name: 'Shipping',
-    icon: TruckIcon,
-    isOpen: false,
-    subItems: [
-      { name: 'Carriers', path: '/admin/shipping/carriers', icon: TruckIcon },
-      { name: 'Preferences', path: '/admin/shipping/preferences', icon: AdjustmentsHorizontalIcon },
+      { name: 'Basket', path: '/admin/customers/basket', icon: ShoppingBasket },
     ]
   },
   {

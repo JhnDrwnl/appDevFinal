@@ -126,12 +126,12 @@
             </svg>
           </button>
 
-          <!-- Shopping Cart -->
+          <!-- Basket -->
           <div class="relative">
-            <button class="text-gray-700 hover:text-[#FF9934] focus:outline-none">
+            <button @click="navigateTo('/basket')" class="text-gray-700 hover:text-[#FF9934] focus:outline-none">
               <ShoppingBasket class="w-6 h-6" />
               <span class="absolute -top-1 -right-1 bg-[#FF9934] text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                0
+                {{ basketCount }}
               </span>
             </button>
           </div>
@@ -160,13 +160,13 @@
               class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg py-1 z-20 border border-gray-100"
             >
               <template v-if="isAuthenticated">
-                <router-link to="/user/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Account</router-link>
+                <router-link to="/auth/account" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Account</router-link>
                 <router-link to="/user/orders" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Orders</router-link>
                 <button @click="handleLogout" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Logout</button>
               </template>
               <template v-else>
-                <router-link to="/login" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Login</router-link>
-                <router-link to="/register" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Register</router-link>
+                <router-link to="/auth/login" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Login</router-link>
+                <router-link to="/auth/register" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Register</router-link>
               </template>
             </div>
           </div>
@@ -258,13 +258,13 @@
 
           <!-- Authentication links for mobile -->
           <template v-if="isAuthenticated">
-            <router-link to="/user/profile" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-[#FF9934] hover:bg-gray-50 rounded-md">Account</router-link>
+            <router-link to="/auth/account" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-[#FF9934] hover:bg-gray-50 rounded-md">Account</router-link>
             <router-link to="/user/orders" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-[#FF9934] hover:bg-gray-50 rounded-md">Orders</router-link>
             <button @click="handleLogout" class="w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-[#FF9934] hover:bg-gray-50 rounded-md">Logout</button>
           </template>
           <template v-else>
-            <router-link to="/login" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-[#FF9934] hover:bg-gray-50 rounded-md">Login</router-link>
-            <router-link to="/register" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-[#FF9934] hover:bg-gray-50 rounded-md">Register</router-link>
+            <router-link to="/auth/login" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-[#FF9934] hover:bg-gray-50 rounded-md">Login</router-link>
+            <router-link to="/auth/register" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-[#FF9934] hover:bg-gray-50 rounded-md">Register</router-link>
           </template>
         </div>
       </div>
@@ -273,16 +273,18 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
+import { ref, watch, onMounted, onUnmounted, computed, onBeforeMount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/modules/auth'
 import { useCategoryStore } from '@/store/modules/categories'
+import { useBasketStore } from '@/store/modules/basket'
 import { ShoppingBasket, Bell } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const categoryStore = useCategoryStore()
+const basketStore = useBasketStore()
 
 const mobileMenuOpen = ref(false)
 const isDropdownOpen = ref(false)
@@ -308,6 +310,12 @@ const navItems = [
 
 const rootCategories = computed(() => categoryStore.getRootCategories)
 const getChildCategories = computed(() => categoryStore.getChildCategories)
+
+const basketCount = computed(() => basketStore.basketItems.reduce((total, item) => total + item.quantity, 0))
+
+onBeforeMount(() => {
+  basketStore.fetchBasketItems()
+})
 
 const toggleMobileMenu = () => {
   mobileMenuOpen.value = !mobileMenuOpen.value
@@ -380,6 +388,7 @@ const navigateTo = (path, name) => {
   isDropdownOpen.value = false
   isDropdownClicked.value = false
   closeMobileMenu()
+  closeDropdowns()
 }
 
 const handleLogout = async () => {

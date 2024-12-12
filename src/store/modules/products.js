@@ -1,3 +1,4 @@
+//stores/modules/products.js
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { db, storage } from '@/services/firebase'
@@ -303,54 +304,54 @@ export const useProductStore = defineStore('products', () => {
       const currentData = productSnap.data();
 
       const firestoreData = {
-        name: updatedData.name,
-        description: updatedData.description,
-        price: parseFloat(updatedData.price) || 0,
-        categoryIds: updatedData.categoryIds || [],
-        stockQuantity: parseInt(updatedData.stockQuantity) || 0,
-        date: updatedData.date,
+        ...currentData,
+        ...updatedData,
+        name: updatedData.name || currentData.name,
+        description: updatedData.description || currentData.description,
+        price: parseFloat(updatedData.price) || currentData.price,
+        categoryIds: updatedData.categoryIds || currentData.categoryIds,
+        stockQuantity: updatedData.stockQuantity !== undefined ? parseInt(updatedData.stockQuantity) : currentData.stockQuantity,
+        date: updatedData.date || currentData.date,
         updatedAt: serverTimestamp()
       };
 
-      let imageURLs = [...(currentData.imageURLs || [])];
-      let imagePaths = [...(currentData.imagePaths || [])];
+      // Handle image updates only if new images are provided
+      if (updatedData.images) {
+        let imageURLs = [...(currentData.imageURLs || [])];
+        let imagePaths = [...(currentData.imagePaths || [])];
 
-      // Handle existing images
-      const keptImages = updatedData.images.filter(img => !img.isNew).map(img => img.url);
-      imageURLs = imageURLs.filter(url => keptImages.includes(url));
-      imagePaths = imagePaths.filter(path => keptImages.some(url => url.includes(path.split('/').pop())));
+        // Handle existing images
+        const keptImages = updatedData.images.filter(img => !img.isNew).map(img => img.url);
+        imageURLs = imageURLs.filter(url => keptImages.includes(url));
+        imagePaths = imagePaths.filter(path => keptImages.some(url => url.includes(path.split('/').pop())));
 
-      // Handle new images
-      for (const image of updatedData.images) {
-        if (image.isNew) {
-          const result = await uploadImage(image.url, productId);
-          if (!result.success) throw new Error(result.error);
-          imageURLs.push(result.url);
-          imagePaths.push(result.path);
-          uploadedFiles.push(result.path);
+        // Handle new images
+        for (const image of updatedData.images) {
+          if (image.isNew) {
+            const result = await uploadImage(image.url, productId);
+            if (!result.success) throw new Error(result.error);
+            imageURLs.push(result.url);
+            imagePaths.push(result.path);
+            uploadedFiles.push(result.path);
+          }
         }
+
+        firestoreData.imageURLs = imageURLs;
+        firestoreData.imagePaths = imagePaths;
       }
 
-      firestoreData.imageURLs = imageURLs;
-      firestoreData.imagePaths = imagePaths;
-
-      let thumbnailURL = updatedData.thumbnailURL;
-      let thumbnailPath = currentData.thumbnailPath;
-
+      // Handle thumbnail update only if a new thumbnail is provided
       if (updatedData.thumbnailFile) {
         const result = await uploadImage(updatedData.thumbnailFile, productId, true);
         if (!result.success) throw new Error(result.error);
         
-        thumbnailURL = result.url;
-        thumbnailPath = result.path;
+        firestoreData.thumbnailURL = result.url;
+        firestoreData.thumbnailPath = result.path;
         uploadedFiles.push(result.path);
       } else if (updatedData.thumbnailURL === null) {
-        thumbnailURL = null;
-        thumbnailPath = null;
+        firestoreData.thumbnailURL = null;
+        firestoreData.thumbnailPath = null;
       }
-
-      firestoreData.thumbnailURL = thumbnailURL;
-      firestoreData.thumbnailPath = thumbnailPath;
 
       await updateDoc(productRef, firestoreData);
 
@@ -364,21 +365,23 @@ export const useProductStore = defineStore('products', () => {
         });
       }
 
-      // Update category product counts
-      const oldCategoryIds = currentData.categoryIds || []
-      const newCategoryIds = updatedData.categoryIds || []
+      // Update category product counts only if categories have changed
+      if (updatedData.categoryIds) {
+        const oldCategoryIds = currentData.categoryIds || []
+        const newCategoryIds = updatedData.categoryIds || []
 
-      // Decrement count for removed categories
-      for (const categoryId of oldCategoryIds) {
-        if (categoryId !== 'None' && !newCategoryIds.includes(categoryId)) {
-          await categoryStore.decrementProductCount(categoryId)
+        // Decrement count for removed categories
+        for (const categoryId of oldCategoryIds) {
+          if (categoryId !== 'None' && !newCategoryIds.includes(categoryId)) {
+            await categoryStore.decrementProductCount(categoryId)
+          }
         }
-      }
 
-      // Increment count for added categories
-      for (const categoryId of newCategoryIds) {
-        if (categoryId !== 'None' && !oldCategoryIds.includes(categoryId)) {
-          await categoryStore.incrementProductCount(categoryId)
+        // Increment count for added categories
+        for (const categoryId of newCategoryIds) {
+          if (categoryId !== 'None' && !oldCategoryIds.includes(categoryId)) {
+            await categoryStore.incrementProductCount(categoryId)
+          }
         }
       }
 

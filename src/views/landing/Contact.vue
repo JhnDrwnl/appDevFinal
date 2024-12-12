@@ -12,34 +12,34 @@
             <h2 class="text-3xl md:text-4xl font-bold text-center mb-10">Contact Us</h2>
             
             <!-- Get in Touch Section -->
-            <div class="mb-16 w-full">
-              <h3 class="text-2xl font-bold mb-6 text-center">GET IN TOUCH</h3>
+            <div class="mb-16 w-full bg-white shadow-md p-8 rounded-lg">
+              <h3 class="text-2xl font-bold mb-6 text-center block">GET IN TOUCH</h3>
               <p class="text-gray-600 mb-8 text-center text-base max-w-4xl mx-auto">
                 Have questions about our products or services? We're here to help! Get in touch with us through any of the following channels.
               </p>
               
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+              <div class="grid grid-cols-1 bg-blue- md:grid-cols-2 gap-6 max-w-6xl mx-auto">
                 <!-- Address & Phone -->
-                <div class="text-center md:text-left space-y-6">
-                  <div>
+                <div class="text-center md:text-left space-y-4 ">
+                  <div class="bg-gray-200 hover:bg-gray-300 transition duration-200 hover:scale-105 px-6 py-4 rounded-lg ">
                     <h4 class="font-semibold text-lg mb-2">Address</h4>
                     <p class="text-gray-600">4005 Silver Business Point India</p>
                   </div>
                   
-                  <div>
+                  <div class="bg-gray-200 hover:bg-gray-300 transition duration-200 hover:scale-105 px-6 py-4 rounded-lg ">
                     <h4 class="font-semibold text-lg mb-2">Phone</h4>
                     <p class="text-gray-600">123456789</p>
                   </div>
                 </div>
                 
                 <!-- Email & Opening Hours -->
-                <div class="text-center md:text-left space-y-6">
-                  <div>
+                <div class="text-center md:text-left space-y-4">
+                  <div  class="bg-gray-200 hover:bg-gray-300 transition duration-200 hover:scale-105 px-6 py-4 rounded-lg ">
                     <h4 class="font-semibold text-lg mb-2">Email</h4>
                     <p class="text-gray-600">demoexample@gmail.com</p>
                   </div>
                   
-                  <div>
+                  <div  class="bg-gray-200 hover:bg-gray-300 transition duration-200 hover:scale-105 px-6 py-4 rounded-lg ">
                     <h4 class="font-semibold text-lg mb-2">Opening Hours</h4>
                     <p class="text-gray-600">
                       We are open: Monday - Saturday (10AM - 5PM) and closed on Sunday.

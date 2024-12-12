@@ -76,7 +76,6 @@
   const menuItems = [
     { name: 'Dashboard', path: '/driver/dashboard', icon: HomeIcon },
     { name: 'Active Deliveries', path: '/driver/active-deliveries', icon: TruckIcon },
-    { name: 'Route Map', path: '/driver/route-map', icon: MapIcon },
     { name: 'Delivery History', path: '/driver/delivery-history', icon: ClipboardDocumentListIcon },
     { name: 'Profile', path: '/driver/profile', icon: UserIcon },
   ]

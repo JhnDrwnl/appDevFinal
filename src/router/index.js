@@ -80,7 +80,7 @@ router.beforeEach(async (to, from, next) => {
   }
 
   const isAuthenticated = authStore.isAuthenticated
-  const userRole = authStore.userRole
+  const userRole = authStore.userRole || localStorage.getItem('userRole')
   const userExists = authStore.userExists
 
   console.log('Current user role:', userRole)
@@ -112,4 +112,3 @@ router.beforeEach(async (to, from, next) => {
 })
 
 export default router
-
