@@ -11,6 +11,7 @@ import ProductPriceRuleList from '@/views/admin/ProductPriceRuleList.vue'
 import CategoryPriceRuleList from '@/views/admin/CategoryPriceRuleList.vue'
 import ReservationList from '@/views/admin/ReservationList.vue'
 import RemovalRequest from '@/components/admin/RemovalRequestForm.vue'
+import AdminBasket  from '@/views/admin/BasketManagement.vue'
 
 export default [
   {
@@ -67,7 +68,12 @@ export default [
             name: 'RemovalRequestForm',
             component: RemovalRequest,
             props: true
-          }
+          },
+          {
+            path: 'basket',
+            name: 'AdminBasket',
+            component: AdminBasket
+          },
         ]
       },
       {

@@ -45,7 +45,6 @@ const menuItems = [
   { name: 'My Account', to: '/auth/account', icon: User, requiresAuth: true },
   { name: 'Address Book', to: '/auth/address', icon: BookOpen, requiresAuth: true },
   { name: 'Reservation History', to: '/auth/reservation', icon: ShoppingBasket, requiresAuth: true },
-  { name: 'Newsletter', to: '/account/newsletter', icon: Mail, requiresAuth: true },
 ]
 
 const logoutItem = { name: 'Logout', to: '#', icon: LogOut, requiresAuth: true }

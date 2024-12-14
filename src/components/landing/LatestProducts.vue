@@ -93,12 +93,14 @@ import { ref, onMounted } from 'vue';
 import { useProductStore } from '@/store/modules/products';
 import { useProductPriceRuleStore } from '@/store/modules/productPriceRules';
 import { usePriceRuleStore } from '@/store/modules/priceRules';
+import { useBasketStore } from '@/store/modules/basket';
 import ProductDetailModal from '@/components/landing/ProductDetailModal.vue';
 import DOMPurify from 'dompurify';
 
 const productStore = useProductStore();
 const productPriceRuleStore = useProductPriceRuleStore();
 const priceRuleStore = usePriceRuleStore();
+const basketStore = useBasketStore();
 
 const latestProducts = ref([]);
 const selectedProduct = ref(null);
@@ -192,8 +194,12 @@ const showProductDetails = (product) => {
 };
 
 const handleReserve = ({ productId, quantity }) => {
-  // Implement reserve functionality
-  console.log('Reserving product:', { productId, quantity });
+  const product = latestProducts.value.find(p => p.id === productId);
+  if (product) {
+    basketStore.addToBasket(product, quantity);
+    alert(`${quantity} ${product.name}(s) has been added to your basket!`);
+  }
+  selectedProduct.value = null;
 };
 </script>
 

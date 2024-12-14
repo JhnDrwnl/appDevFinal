@@ -6,7 +6,7 @@
       <Categories :selectedCategoryId="selectedCategoryId" />
       <RefineSearch @apply-filters="applyFilters" />
       <BestSellers />
-      <LatestProducts />
+      <!-- <LatestProducts /> -->
     </div>
 
     <!-- Main Content Area -->
@@ -59,9 +59,8 @@
 import { ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCategoryStore } from '@/store/modules/categories'
-import BestSellers from '@/components/user/BestSellers.vue'
 import Categories from '@/components/user/Categories.vue'
-import LatestProducts from '@/components/landing/LatestProducts.vue'
+// import LatestProducts from '@/components/landing/LatestProducts.vue'
 import RefineSearch from '@/components/user/RefineSearch.vue'
 import ProductListControls from '@/components/user/ProductListControls.vue'
 import ProductCards from '@/components/user/ProductCards.vue'

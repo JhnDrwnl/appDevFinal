@@ -1,5 +1,6 @@
+// store/modules/customers.js
 import { defineStore } from 'pinia'
-import { db } from '@/services/firebase'
+import { db, auth } from '@/services/firebase'
 import { collection, query, getDocs, doc, getDoc, updateDoc, where, orderBy } from 'firebase/firestore'
 
 export const useCustomerStore = defineStore('customers', {
@@ -15,52 +16,28 @@ export const useCustomerStore = defineStore('customers', {
 
   actions: {
     async fetchCustomers() {
-      this.isLoading = true
-      this.error = null
+      this.isLoading = true;
+      this.error = null;
       try {
-        const q = query(
+        const userQuery = query(
           collection(db, 'users'),
           where('role', '==', 'user'),
           orderBy('createdAt', 'desc')
-        )
-        const querySnapshot = await getDocs(q)
-        this.customers = querySnapshot.docs.map(doc => ({
+        );
+        const userQuerySnapshot = await getDocs(userQuery);
+        this.customers = userQuerySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
           lastVisit: doc.data().lastVisit ? doc.data().lastVisit.toDate() : null,
-          createdAt: doc.data().createdAt.toDate()
-        }))
+          createdAt: doc.data().createdAt.toDate(),
+          isGuest: false,
+          role: 'user'
+        }));
       } catch (error) {
-        console.error('Error fetching customers:', error)
-        this.error = error.message
+        console.error('Error fetching customers:', error);
+        this.error = error.message;
       } finally {
-        this.isLoading = false
-      }
-    },
-
-    async fetchCustomer(id) {
-      this.isLoading = true
-      this.error = null
-      try {
-        const docRef = doc(db, 'users', id)
-        const docSnap = await getDoc(docRef)
-        if (docSnap.exists()) {
-          const data = docSnap.data()
-          return {
-            id: docSnap.id,
-            ...data,
-            lastVisit: data.lastVisit ? data.lastVisit.toDate() : null,
-            createdAt: data.createdAt.toDate()
-          }
-        } else {
-          throw new Error('Customer not found')
-        }
-      } catch (error) {
-        console.error('Error fetching customer:', error)
-        this.error = error.message
-        throw error
-      } finally {
-        this.isLoading = false
+        this.isLoading = false;
       }
     },
 
@@ -85,7 +62,28 @@ export const useCustomerStore = defineStore('customers', {
     },
 
     async toggleCustomerStatus(customerId, isEnabled) {
-      return this.updateCustomer(customerId, { isEnabled })
+      this.isLoading = true;
+      this.error = null;
+      try {
+        const customerRef = doc(db, 'users', customerId);
+        await updateDoc(customerRef, { isEnabled });
+        
+        // Update Firebase Auth user
+        const user = await auth.getUser(customerId);
+        await auth.updateUser(customerId, { disabled: !isEnabled });
+
+        const index = this.customers.findIndex(c => c.id === customerId);
+        if (index !== -1) {
+          this.customers[index] = { ...this.customers[index], isEnabled };
+        }
+        return { success: true };
+      } catch (error) {
+        console.error('Error updating customer status:', error);
+        this.error = error.message;
+        return { success: false, error: this.error };
+      } finally {
+        this.isLoading = false;
+      }
     },
 
     async updateLastVisit(customerId) {
@@ -94,3 +92,4 @@ export const useCustomerStore = defineStore('customers', {
     }
   }
 })
+

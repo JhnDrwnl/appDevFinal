@@ -3,7 +3,9 @@
     <!-- Newsletter Section -->
     <div class="container mx-auto px-4 py-16">
       <div class="text-center mb-8">
-        <h2 class="text-3xl font-bold mb-4">Get 20% off on your first order</h2>
+        <h2 class="text-3xl font-bold mb-4">
+          {{ activeDiscount ? `Get ${activeDiscount.value}% off ${activeDiscount.name}` : 'Join our newsletter for exclusive offers' }}
+        </h2>
         <p class="text-gray-600">Join our email list for exclusive offers and the latest news.</p>
       </div>
       
@@ -36,7 +38,7 @@
             </div>
           </div>
           <p class="text-gray-600">
-            Lorem ipsum dolor sit amet, consectet adipiscing elit. Gravida volutpat sapien viverra. Etiam id sit donec integer tincidunt vestibulum
+            We’d love to hear from you! Reach out to us through the following channels:
           </p>
           <!-- Social Media Icons -->
           <div class="flex space-x-4">
@@ -60,9 +62,7 @@
           <h3 class="font-bold text-lg mb-4">Account</h3>
           <ul class="space-y-2">
             <li><a href="#" class="text-gray-600 hover:text-[#FF9934]">My Account</a></li>
-            <li><a href="#" class="text-gray-600 hover:text-[#FF9934]">Specials</a></li>
             <li><a href="#" class="text-gray-600 hover:text-[#FF9934]">Order History</a></li>
-            <li><a href="#" class="text-gray-600 hover:text-[#FF9934]">Newsletter</a></li>
             <li><a href="#" class="text-gray-600 hover:text-[#FF9934]">Contact Us</a></li>
           </ul>
         </div>
@@ -85,15 +85,15 @@
           <ul class="space-y-2">
             <li class="flex items-start space-x-2">
               <MapPinIcon class="w-5 h-5 text-[#FF9934] flex-shrink-0 mt-1" />
-              <span class="text-gray-600">4005 Silver Business Point India</span>
+              <span class="text-gray-600">Supreme Agri Vet Supply - Calapan</span>
             </li>
             <li class="flex items-center space-x-2">
               <PhoneIcon class="w-5 h-5 text-[#FF9934]" />
-              <span class="text-gray-600">123456789</span>
+              <span class="text-gray-600">09123456789</span>
             </li>
             <li class="flex items-center space-x-2">
               <MailIcon class="w-5 h-5 text-[#FF9934]" />
-              <span class="text-gray-600">demoexample@gmail.com</span>
+              <span class="text-gray-600">supremeagrivetstore@gmail.com</span>
             </li>
           </ul>
         </div>
@@ -113,5 +113,25 @@ import {
   MailIcon,
   ArrowRightIcon
 } from 'lucide-vue-next'
+import { usePriceRuleStore } from '@/store/modules/priceRules'
+import { computed, onMounted } from 'vue'
+
+const priceRuleStore = usePriceRuleStore()
+
+onMounted(() => {
+  priceRuleStore.fetchPriceRules()
+})
+
+const activeDiscount = computed(() => {
+  const activeRules = priceRuleStore.activePriceRules
+  if (activeRules.length > 0) {
+    // Assuming we want to display the highest discount
+    const highestDiscount = activeRules.reduce((max, rule) => 
+      rule.value > max.value ? rule : max
+    , activeRules[0])
+    return highestDiscount
+  }
+  return null
+})
 </script>
 

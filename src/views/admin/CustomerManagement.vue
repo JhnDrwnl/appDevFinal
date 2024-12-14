@@ -1,16 +1,6 @@
 <!-- views/admin/CustomerManagement.vue -->
 <template>
   <div class="w-full">
-    <Alert
-      v-if="showAlert"
-      :type="alertType"
-      :dismissible="true"
-      v-model="showAlert"
-      class="mb-6"
-    >
-      {{ alertMessage }}
-    </Alert>
-
     <div class="flex items-center justify-between mb-6">
       <div class="relative flex-1 max-w-md">
         <input
@@ -23,14 +13,6 @@
         <span class="absolute left-3 top-2.5 text-gray-400">
           <MagnifyingGlassIcon class="w-5 h-5" />
         </span>
-      </div>
-      <div class="flex items-center space-x-4">
-        <button
-          @click="exportCustomers"
-          class="bg-[#FF9934] text-white px-6 py-2 rounded-full hover:bg-[#E88820] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FF9934]"
-        >
-          Export
-        </button>
       </div>
     </div>
 
@@ -46,78 +28,89 @@
       <p>No customers found.</p>
     </div>
 
-    <div v-else class="bg-white rounded-lg shadow overflow-hidden">
-      <div class="overflow-x-auto relative">
-        <table class="w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th v-for="header in tableHeaders" :key="header.key" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" @click="sortBy(header.key)">
-                {{ header.label }}
-                <ArrowsUpDownIcon v-if="sortKey === header.key" :class="{ 'transform rotate-180': sortDirection === 'desc' }" class="inline-block w-4 h-4 ml-1" />
-              </th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="customer in paginatedCustomers" :key="customer.id">
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center">
-                  <div class="flex-shrink-0 h-10 w-10">
-                    <img class="h-10 w-10 rounded-full" :src="customer.photoURL || '/placeholder.svg?height=40&width=40'" :alt="customer.username" />
+    <div v-else>
+      <div v-if="!selectedCustomer" class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="overflow-x-auto relative">
+          <table class="w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th v-for="header in tableHeaders" :key="header.key" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" @click="sortBy(header.key)">
+                  {{ header.label }}
+                  <ArrowsUpDownIcon v-if="sortKey === header.key" :class="{ 'transform rotate-180': sortDirection === 'desc' }" class="inline-block w-4 h-4 ml-1" />
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Total Reservations
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr v-for="customer in paginatedCustomers" :key="customer.id">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <div class="flex-shrink-0 h-10 w-10">
+                      <img class="h-10 w-10 rounded-full" :src="customer.photoURL || '/placeholder.svg?height=40&width=40'" :alt="customer.username" />
+                    </div>
+                    <div class="ml-4">
+                      <div class="text-sm font-medium text-gray-900">{{ customer.username }}</div>
+                    </div>
                   </div>
-                  <div class="ml-4">
-                    <div class="text-sm font-medium text-gray-900">{{ customer.username }}</div>
-                  </div>
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ customer.email }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ formatDate(customer.createdAt) }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ formatDate(customer.lastVisit) }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <span :class="customer.isEnabled ? 'text-green-600' : 'text-red-600'">
-                  {{ customer.isEnabled ? 'Enabled' : 'Disabled' }}
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button
-                  @click="toggleCustomerStatus(customer)"
-                  class="text-[#FF9934] hover:text-[#E88820] focus:outline-none rounded-full px-4 py-2 border border-[#FF9934] hover:bg-[#FF9934] hover:text-white transition-colors duration-300"
-                >
-                  {{ customer.isEnabled ? 'Disable' : 'Enable' }}
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ customer.email }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {{ formatDate(customer.createdAt) }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {{ customer.totalReservations || 0 }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <button @click="viewCustomerDetails(customer)" class="text-[#FF9934] hover:text-[#E88820] mr-2">
+                    View Details
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
 
-    <div class="flex items-center justify-between mt-6">
-      <div class="text-sm text-gray-500">
-        Rows per page: 
-        <select v-model="rowsPerPage" class="ml-2 border-gray-300 rounded-md">
-          <option>5</option>
-          <option>10</option>
-          <option>25</option>
-        </select>
-      </div>
-      <div class="flex items-center space-x-2">
-        <button
-          @click="previousPage"
-          :disabled="currentPage === 1"
-          class="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50"
-        >
-          <ChevronLeftIcon class="h-5 w-5" />
-        </button>
-        <span class="text-sm text-gray-500">
-          {{ currentPage }} of {{ totalPages }}
-        </span>
-        <button
-          @click="nextPage"
-          :disabled="currentPage === totalPages"
-          class="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50"
-        >
-          <ChevronRightIcon class="h-5 w-5" />
-        </button>
+      <UserDetailsAndOrders
+        v-else
+        :user="selectedCustomer"
+        :totalReservations="selectedCustomer.totalReservations"
+        @close="closeCustomerDetails"
+      />
+
+      <div class="flex items-center justify-between mt-6">
+        <div class="text-sm text-gray-500">
+          Rows per page: 
+          <select v-model="rowsPerPage" class="ml-2 border-gray-300 rounded-md">
+            <option>5</option>
+            <option>10</option>
+            <option>25</option>
+          </select>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button
+            @click="previousPage"
+            :disabled="currentPage === 1"
+            class="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50"
+          >
+            <ChevronLeftIcon class="h-5 w-5" />
+          </button>
+          <span class="text-sm text-gray-500">
+            {{ currentPage }} of {{ totalPages }}
+          </span>
+          <button
+            @click="nextPage"
+            :disabled="currentPage === totalPages"
+            class="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50"
+          >
+            <ChevronRightIcon class="h-5 w-5" />
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -126,45 +119,51 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useCustomerStore } from '@/store/modules/customers'
+import { useReservationStore } from '@/store/modules/reservation'
 import { 
   MagnifyingGlassIcon, 
   ArrowsUpDownIcon, 
   ChevronLeftIcon,
   ChevronRightIcon
 } from '@heroicons/vue/24/outline'
-import Alert from '@/components/common/Alert.vue'
+import UserDetailsAndOrders from '@/components/admin/UserDetailsAndOrders.vue'
 
 const customerStore = useCustomerStore()
+const reservationStore = useReservationStore()
 const searchQuery = ref('')
 const sortKey = ref('createdAt')
 const sortDirection = ref('desc')
 const currentPage = ref(1)
 const rowsPerPage = ref(10)
-
-const showAlert = ref(false)
-const alertType = ref('success')
-const alertMessage = ref('')
+const selectedCustomer = ref(null)
 
 const tableHeaders = [
   { key: 'username', label: 'Name' },
   { key: 'email', label: 'Email Address' },
-  { key: 'createdAt', label: 'Registration Date' },
-  { key: 'lastVisit', label: 'Last Visit' },
-  { key: 'isEnabled', label: 'Status' },
-  { key: 'actions', label: 'Actions' }
+  { key: 'createdAt', label: 'Registration Date' }
 ]
 
-onMounted(() => {
-  customerStore.fetchCustomers()
+onMounted(async () => {
+  await customerStore.fetchCustomers()
+  await fetchTotalReservations()
 })
+
+const fetchTotalReservations = async () => {
+  const reservations = await reservationStore.fetchAllReservations()
+  if (reservations.success) {
+    customerStore.customers.forEach(customer => {
+      customer.totalReservations = reservations.reservations.filter(r => r.userId === customer.id).length
+    })
+  }
+}
 
 const filteredCustomers = computed(() => {
   return customerStore.customers.filter(customer => {
     const matchesSearch = customer.username.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-                          customer.email.toLowerCase().includes(searchQuery.value.toLowerCase())
-    return matchesSearch && customer.role === 'user'
-  })
-})
+                          customer.email.toLowerCase().includes(searchQuery.value.toLowerCase());
+    return matchesSearch;
+  });
+});
 
 const sortedCustomers = computed(() => {
   return [...filteredCustomers.value].sort((a, b) => {
@@ -191,16 +190,6 @@ const handleSearch = () => {
   currentPage.value = 1
 }
 
-const toggleCustomerStatus = async (customer) => {
-  try {
-    await customerStore.toggleCustomerStatus(customer.id, !customer.isEnabled)
-    showAlertMessage(`Customer ${customer.isEnabled ? 'disabled' : 'enabled'} successfully`, 'success')
-    await customerStore.fetchCustomers() // Refresh the customer list
-  } catch (error) {
-    showAlertMessage('Failed to update customer status', 'error')
-  }
-}
-
 const sortBy = (key) => {
   if (sortKey.value === key) {
     sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
@@ -222,34 +211,12 @@ const nextPage = () => {
   }
 }
 
-const exportCustomers = () => {
-  const csvContent = "data:text/csv;charset=utf-8," 
-    + tableHeaders.map(header => header.label).join(",") + "\n"
-    + sortedCustomers.value.map(customer => {
-        return [
-          customer.username,
-          customer.email,
-          formatDate(customer.createdAt),
-          formatDate(customer.lastVisit),
-          customer.isEnabled ? 'Enabled' : 'Disabled'
-        ].join(",")
-      }).join("\n")
-
-  const encodedUri = encodeURI(csvContent)
-  const link = document.createElement("a")
-  link.setAttribute("href", encodedUri)
-  link.setAttribute("download", "customers.csv")
-  document.body.appendChild(link)
-  link.click()
+const viewCustomerDetails = (customer) => {
+  selectedCustomer.value = customer
 }
 
-const showAlertMessage = (message, type = 'success') => {
-  alertMessage.value = message
-  alertType.value = type
-  showAlert.value = true
-  setTimeout(() => {
-    showAlert.value = false
-  }, 5000) // Hide the alert after 5 seconds
+const closeCustomerDetails = () => {
+  selectedCustomer.value = null
 }
 
 watch(searchQuery, () => {
@@ -268,3 +235,4 @@ watch(searchQuery, () => {
   opacity: 0;
 }
 </style>
+

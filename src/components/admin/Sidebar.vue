@@ -156,7 +156,6 @@ const dropdownMenus = ref([
     isOpen: false,
     subItems: [
       { name: 'Customers', path: '/admin/customers/customers', icon: UsersIcon },
-      { name: 'Addresses', path: '/admin/customers/addresses', icon: MapPinIcon },
       { name: 'Basket', path: '/admin/customers/basket', icon: ShoppingBasket },
     ]
   },

@@ -11,97 +11,95 @@
       {{ alertMessage }}
     </Alert>
 
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold text-gray-900">Employees</h1>
-      <div class="flex items-center space-x-4">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search employees"
-          @input="handleSearch"
-          class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9934]"
-        />
-        <button
-          v-if="isAdmin"
-          @click="showAddEmployeeForm"
-          class="bg-[#FF9934] text-white px-6 py-2 rounded-full hover:bg-[#E88820] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FF9934]"
-        >
-          Add Employee
-        </button>
+    <div v-if="!isAddingEmployee && !isEditingEmployee">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Employees</h1>
+        <div class="flex items-center space-x-4">
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search employees"
+            @input="handleSearch"
+            class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9934]"
+          />
+          <button
+            v-if="isAdmin"
+            @click="showAddEmployeeForm"
+            class="bg-[#FF9934] text-white px-6 py-2 rounded-full hover:bg-[#E88820] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FF9934]"
+          >
+            Add Employee
+          </button>
+        </div>
+      </div>
+      
+      <div v-if="!authStore.isAuthenticated" class="text-center py-4 text-red-500">
+        <p>You must be logged in to view employees.</p>
+      </div>
+
+      <div v-else-if="employeeStore.isLoading" class="text-center py-4">
+        <p>Loading employees...</p>
+      </div>
+
+      <div v-else-if="employeeStore.error" class="text-center py-4 text-red-500">
+        <p>{{ employeeStore.error }}</p>
+      </div>
+
+      <div v-else-if="sortedEmployees.length === 0" class="text-center py-4">
+        <p>No employees found.</p>
+      </div>
+
+      <div v-else class="bg-white rounded-lg shadow overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email Address</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+              <th scope="col" v-if="isAdmin" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr v-for="employee in sortedEmployees" :key="employee.id" :class="{ 'bg-gray-50': employee.role === 'admin' }">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 h-10 w-10">
+                    <img class="h-10 w-10 rounded-full" :src="employee.photoURL || '/placeholder.svg?height=40&width=40'" :alt="employee.username" />
+                  </div>
+                  <div class="ml-4">
+                    <div class="text-sm font-medium text-gray-900">{{ employee.username }}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ employee.email }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ employee.role }}</td>
+              <td v-if="isAdmin && employee.role !== 'admin'" class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <button @click="showEditEmployeeForm(employee)" class="text-green-600 hover:text-green-900 mr-4">
+                  <PencilSquareIcon class="h-5 w-5" />
+                </button>
+                <button @click="deleteEmployee(employee.id)" class="text-red-600 hover:text-red-900">
+                  <TrashIcon class="h-5 w-5" />
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
-    
-    <transition name="fade" mode="out-in">
-      <div v-if="!isAddingEmployee && !isEditingEmployee" key="employee-list">
-        <div v-if="!authStore.isAuthenticated" class="text-center py-4 text-red-500">
-          <p>You must be logged in to view employees.</p>
-        </div>
 
-        <div v-else-if="employeeStore.isLoading" class="text-center py-4">
-          <p>Loading employees...</p>
-        </div>
+    <AddEmployeeForm 
+      v-if="isAddingEmployee"
+      @close="cancelAddEmployee"
+      @employee-added="handleEmployeeAdded"
+      @show-alert="showAlertMessage"
+    />
 
-        <div v-else-if="employeeStore.error" class="text-center py-4 text-red-500">
-          <p>{{ employeeStore.error }}</p>
-        </div>
-
-        <div v-else-if="sortedEmployees.length === 0" class="text-center py-4">
-          <p>No employees found.</p>
-        </div>
-
-        <div v-else class="bg-white rounded-lg shadow overflow-hidden">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-              <tr>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email Address</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                <th scope="col" v-if="isAdmin" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="employee in sortedEmployees" :key="employee.id" :class="{ 'bg-gray-50': employee.role === 'admin' }">
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="flex items-center">
-                    <div class="flex-shrink-0 h-10 w-10">
-                      <img class="h-10 w-10 rounded-full" :src="employee.photoURL || '/placeholder.svg?height=40&width=40'" :alt="employee.username" />
-                    </div>
-                    <div class="ml-4">
-                      <div class="text-sm font-medium text-gray-900">{{ employee.username }}</div>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ employee.email }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ employee.role }}</td>
-                <td v-if="isAdmin && employee.role !== 'admin'" class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button @click="showEditEmployeeForm(employee)" class="text-green-600 hover:text-green-900 mr-4">
-                    <PencilSquareIcon class="h-5 w-5" />
-                  </button>
-                  <button @click="deleteEmployee(employee.id)" class="text-red-600 hover:text-red-900">
-                    <TrashIcon class="h-5 w-5" />
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <AddEmployeeForm 
-        v-else-if="isAddingEmployee"
-        key="add-employee-form"
-        @close="cancelAddEmployee"
-        @employee-added="handleEmployeeAdded"
-      />
-
-      <EditEmployeeForm 
-        v-else-if="isEditingEmployee"
-        key="edit-employee-form"
-        :employee="employeeToEdit"
-        @close="cancelEditEmployee"
-        @employee-updated="handleEmployeeUpdated"
-      />
-    </transition>
+    <EditEmployeeForm 
+      v-if="isEditingEmployee"
+      :employee="employeeToEdit"
+      @close="cancelEditEmployee"
+      @employee-updated="handleEmployeeUpdated"
+      @show-alert="showAlertMessage"
+    />
   </div>
 </template>
 
@@ -198,8 +196,13 @@ const handleEmployeeUpdated = async (updatedEmployee) => {
 }
 
 const showAlertMessage = (message, type = 'success') => {
-  alertMessage.value = message
-  alertType.value = type
+  if (typeof message === 'object' && message.message) {
+    alertMessage.value = message.message
+    alertType.value = message.type || type
+  } else {
+    alertMessage.value = message
+    alertType.value = type
+  }
   showAlert.value = true
   setTimeout(() => {
     showAlert.value = false
@@ -218,4 +221,6 @@ const showAlertMessage = (message, type = 'success') => {
   opacity: 0;
 }
 </style>
+
+
 

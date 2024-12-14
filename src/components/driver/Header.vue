@@ -19,18 +19,6 @@
           </div>
 
           <div class="flex items-center gap-4 md:gap-6">
-            <!-- Search -->
-            <div class="hidden md:flex items-center">
-              <div class="relative">
-                <input
-                  type="text"
-                  placeholder="Search deliveries"
-                  class="w-80 px-5 py-2.5 text-sm bg-gray-50/50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-transparent transition-all duration-200"
-                />
-                <Search class="absolute right-4 top-2.5 h-5 w-5 text-gray-400" />
-              </div>
-            </div>
-
             <!-- Notifications -->
             <button 
               @click="toggleNotifications"
@@ -46,7 +34,7 @@
             <div class="relative ml-auto">
               <button
                 @click="toggleUserMenu"
-                class="focus:outline-none focus:ring-2 focus:ring-blue-500/10 rounded-xl transition-all duration-200"
+                class="focus:outline-none focus:ring-2 focus:ring-[#FF9934]/10 rounded-xl transition-all duration-200"
                 aria-haspopup="true"
                 :aria-expanded="isUserMenuOpen"
               >
@@ -98,7 +86,7 @@ import { useAuthStore } from '@/store/modules/auth'
 import { useNotificationStore } from '@/store/modules/notification'
 import { useReservationStore } from '@/store/modules/reservation'
 import { useRouter } from 'vue-router'
-import { Search, Bell, Settings } from 'lucide-vue-next'
+import { Bell, Settings } from 'lucide-vue-next'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -157,4 +145,3 @@ defineProps({
 
 defineEmits(['toggle-sidebar'])
 </script>
-

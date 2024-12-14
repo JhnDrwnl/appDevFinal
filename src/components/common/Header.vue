@@ -119,13 +119,6 @@
 
         <!-- Right side icons -->
         <div class="flex items-center space-x-6">
-          <!-- Search -->
-          <button class="text-gray-700 hover:text-[#FF9934] focus:outline-none">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </button>
-
           <!-- Basket -->
           <div class="relative">
             <button @click="navigateTo('/basket')" class="text-gray-700 hover:text-[#FF9934] focus:outline-none">
@@ -136,22 +129,12 @@
             </button>
           </div>
 
-          <!-- Notifications (only for authenticated users) -->
-          <div v-if="isAuthenticated" class="relative">
-            <button class="text-gray-700 hover:text-[#FF9934] focus:outline-none">
-              <Bell class="w-6 h-6" />
-              <span v-if="unreadNotificationsCount > 0" class="absolute -top-1 -right-1 bg-[#FF9934] text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                {{ unreadNotificationsCount }}
-              </span>
-            </button>
-          </div>
-
           <!-- Profile Dropdown -->
           <div class="relative" ref="profileDropdown">
             <button @click="toggleUserDropdown" class="flex items-center focus:outline-none dropdown-toggle">
               <img 
                 :src="profilePicture" 
-                alt="User profile" 
+                :alt="username" 
                 class="w-10 h-10 rounded-xl object-cover"
               />
             </button>
@@ -160,8 +143,9 @@
               class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg py-1 z-20 border border-gray-100"
             >
               <template v-if="isAuthenticated">
+                <div class="px-4 py-2 text-sm font-medium text-gray-900">{{ username }}</div>
                 <router-link to="/auth/account" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Account</router-link>
-                <router-link to="/user/orders" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Orders</router-link>
+                <router-link to="/auth/reservation" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Orders</router-link>
                 <button @click="handleLogout" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Logout</button>
               </template>
               <template v-else>
@@ -259,7 +243,7 @@
           <!-- Authentication links for mobile -->
           <template v-if="isAuthenticated">
             <router-link to="/auth/account" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-[#FF9934] hover:bg-gray-50 rounded-md">Account</router-link>
-            <router-link to="/user/orders" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-[#FF9934] hover:bg-gray-50 rounded-md">Orders</router-link>
+            <router-link to="/auth/reservation" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-[#FF9934] hover:bg-gray-50 rounded-md">Orders</router-link>
             <button @click="handleLogout" class="w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-[#FF9934] hover:bg-gray-50 rounded-md">Logout</button>
           </template>
           <template v-else>
@@ -278,7 +262,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/modules/auth'
 import { useCategoryStore } from '@/store/modules/categories'
 import { useBasketStore } from '@/store/modules/basket'
-import { ShoppingBasket, Bell } from 'lucide-vue-next'
+import { ShoppingBasket } from 'lucide-vue-next'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '@/services/firebase'
 
 const route = useRoute()
 const router = useRouter()
@@ -294,7 +280,6 @@ const isDropdownClicked = ref(false)
 const header = ref(null)
 const isScrolled = ref(false)
 const profileDropdown = ref(null)
-const unreadNotificationsCount = ref(0)
 const isMainDropdownOpen = ref(false)
 const isUserDropdownOpen = ref(false)
 const isDropdownHovered = ref(false)
@@ -302,6 +287,7 @@ const isDropdownHovered = ref(false)
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 
 const profilePicture = ref('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\' viewBox=\'0 0 36 36\'%3E%3Crect width=\'36\' height=\'36\' fill=\'%23f0f2f5\'/%3E%3Cpath d=\'M18 20.5a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11ZM8 28.5c0-2.5 5-5 10-5s10 2.5 10 5\' stroke=\'%23bec3c9\' stroke-width=\'2\' fill=\'none\'/%3E%3C/svg%3E')
+const username = ref('')
 
 const navItems = [
   { name: 'PoultryTips', to: '/poultry-tips', text: 'Poultry Tips' },
@@ -400,6 +386,30 @@ const handleLogout = async () => {
   }
 }
 
+const fetchUserProfile = async () => {
+  if (authStore.isAuthenticated && authStore.user) {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', authStore.user.uid))
+      if (userDoc.exists()) {
+        const userData = userDoc.data()
+        username.value = userData.username || 'User'
+        profilePicture.value = userData.photoURL || profilePicture.value
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error)
+    }
+  }
+}
+
+watch(() => authStore.isAuthenticated, (newValue) => {
+  if (newValue) {
+    fetchUserProfile()
+  } else {
+    username.value = ''
+    profilePicture.value = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\' viewBox=\'0 0 36 36\'%3E%3Crect width=\'36\' height=\'36\' fill=\'%23f0f2f5\'/%3E%3Cpath d=\'M18 20.5a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11ZM8 28.5c0-2.5 5-5 10-5s10 2.5 10 5\' stroke=\'%23bec3c9\' stroke-width=\'2\' fill=\'none\'/%3E%3C/svg%3E'
+  }
+})
+
 watch(() => route.name, () => {
   activeNavItem.value = null
   isDropdownOpen.value = false
@@ -419,6 +429,9 @@ onMounted(() => {
   window.addEventListener('scroll', handleScroll)
   document.addEventListener('click', handleClickOutside)
   categoryStore.fetchCategories()
+  if (authStore.isAuthenticated) {
+    fetchUserProfile()
+  }
 })
 
 onUnmounted(() => {
@@ -444,4 +457,3 @@ header {
   animation: slideDown 0.3s ease-in-out forwards;
 }
 </style>
-
