@@ -14,7 +14,40 @@
             </button>
           </div>
 
-          <div class="flex items-center">
+          <div class="flex items-center gap-4 md:gap-6">
+            <!-- Notifications Dropdown -->
+            <div class="relative">
+              <button
+                @click="toggleNotifications"
+                class="text-gray-500 hover:text-gray-700 transition-colors duration-200 relative"
+              >
+                <BellIcon class="h-5 w-5" />
+                <span v-if="totalNotificationsCount > 0" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                  {{ totalNotificationsCount }}
+                </span>
+              </button>
+
+              <div
+                v-if="isNotificationsOpen"
+                class="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50"
+              >
+                <div v-if="totalNotificationsCount === 0" class="px-4 py-2 text-sm text-gray-700">
+                  No new notifications
+                </div>
+                <div v-else>
+                  <div v-if="removalRequestsCount > 0">
+                    <h3 class="px-4 py-2 text-xs font-semibold text-gray-500 uppercase">Removal Requests</h3>
+                    <div v-for="request in removalRequests" :key="request.id" class="px-4 py-2 hover:bg-gray-50">
+                      <router-link :to="{ name: 'RemovalRequestForm', params: { id: request.id } }" class="text-sm text-gray-700">
+                        Removal request for item {{ request.itemId }}
+                      </router-link>
+                    </div>
+                  </div>
+                  <!-- Add other notification types here -->
+                </div>
+              </div>
+            </div>
+
             <!-- Profile Dropdown -->
             <div class="relative ml-auto">
               <button
@@ -66,22 +99,40 @@
 </template>
 
 <script setup>
-import { ref, computed, inject } from 'vue'
+import { ref, computed, inject, onMounted } from 'vue'
 import { useAuthStore } from '@/store/modules/auth'
+import { useRemovalRequestStore } from '@/store/modules/removalRequests'
 import { useRouter } from 'vue-router'
 import { 
   MenuIcon, 
+  SearchIcon, 
+  BellIcon, 
+  ShoppingBagIcon, 
   SettingsIcon 
 } from 'lucide-vue-next'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const removalRequestStore = useRemovalRequestStore()
 
 const isUserMenuOpen = ref(false)
+const isNotificationsOpen = ref(false)
 const user = computed(() => authStore.user)
+
+const removalRequests = computed(() => removalRequestStore.removalRequests)
+const removalRequestsCount = computed(() => removalRequests.value.length)
+
+// Placeholder for other notification types
+const otherNotificationsCount = ref(0)
+
+const totalNotificationsCount = computed(() => removalRequestsCount.value + otherNotificationsCount.value)
 
 const toggleUserMenu = () => {
   isUserMenuOpen.value = !isUserMenuOpen.value
+}
+
+const toggleNotifications = () => {
+  isNotificationsOpen.value = !isNotificationsOpen.value
 }
 
 const closeUserMenu = () => {
@@ -105,6 +156,15 @@ const handleMyPreferences = () => {
   openAdminDropdown()
 }
 
+const fetchNotifications = async () => {
+  await removalRequestStore.fetchRemovalRequests()
+  // Fetch other notification types here
+}
+
+onMounted(() => {
+  fetchNotifications()
+})
+
 defineProps({
   isSidebarOpen: {
     type: Boolean,
@@ -114,3 +174,4 @@ defineProps({
 
 defineEmits(['toggle-sidebar'])
 </script>
+
